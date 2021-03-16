@@ -1,0 +1,46 @@
+# Set minimum CMake version
+cmake_minimum_required(VERSION 3.10)
+
+# Set Project Name and language used
+project(engine LANGUAGES CXX C)
+
+# Set C++ standard
+set(CMAKE_CXX_STANDARD 17)
+
+#include_directories(${CMAKE_CURRENT_SOURCE_DIR}/glew/include)
+#link_libraries(${CMAKE_CURRENT_SOURCE_DIR}/glew/src)
+
+#find_package(OpenGL REQUIRED)
+#set(OpenGL_GL_PREFERENCE GLVND)
+#find_package(GLEW REQUIRED)
+#include_directories(${GLEW_INCLUDE_DIRS})
+#link_libraries(${GLEW_LIBRARIES})
+
+#include_directories(${CMAKE_CURRENT_SOURCE_DIR}/glew/include)
+#include_directories(${CMAKE_CURRENT_SOURCE_DIR}/glfw/include)
+
+# Add source code
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
+list(APPEND source_code ${CMAKE_CURRENT_SOURCE_DIR}/src/Polygon.cpp)
+list(APPEND source_code ${CMAKE_CURRENT_SOURCE_DIR}/src/Polygon.h)
+list(APPEND source_code ${CMAKE_CURRENT_SOURCE_DIR}/src/Intersector.h)
+
+# Add Unit Tests code
+#include_directories(${CMAKE_CURRENT_SOURCE_DIR}/test)
+#list(APPEND test_code ${CMAKE_CURRENT_SOURCE_DIR}/test/test_emptyclass.hpp)
+
+# Build executable
+add_executable(${PROJECT_NAME} main.cpp ${source_code} ${test_code} ${GTestFiles})
+
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/glfw)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/glew)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/engine)
+
+# Set Unit Tests
+target_link_libraries(${PROJECT_NAME} PUBLIC Threads::Threads OpenGL GL GLEW glfw)
+#gtest_discover_tests(${PROJECT_NAME})
+
