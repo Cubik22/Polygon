@@ -57,8 +57,8 @@ find_package(Threads REQUIRED)
 #include_directories(${GLEW_INCLUDE_DIRS})
 #link_libraries(${GLEW_LIBRARIES})
 
-#include_directories(${CMAKE_CURRENT_SOURCE_DIR}/glew/include)
-#include_directories(${CMAKE_CURRENT_SOURCE_DIR}/glfw/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/glew/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/glfw/include)
 
 # Add source code
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -79,9 +79,9 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/glfw)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/glew)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/engine)
+#add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/engine)
 
 # Set Unit Tests
-target_link_libraries(${PROJECT_NAME} PUBLIC Threads::Threads OpenGL GL GLEW glfw)
+target_link_libraries(${PROJECT_NAME} PUBLIC Threads::Threads libglew_static glfw)
 #gtest_discover_tests(${PROJECT_NAME})
 

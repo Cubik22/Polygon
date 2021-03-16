@@ -23352,17 +23352,7 @@ GLenum GLEWAPIENTRY glewInit (void)
 #endif /* _WIN32 */
 }
 
-#if defined(_WIN32) && defined(GLEW_BUILD) && defined(__GNUC__)
-/* GCC requires a DLL entry point even without any standard library included. */
-/* Types extracted from windows.h to avoid polluting the rest of the file. */
-int __stdcall DllMainCRTStartup(void* instance, unsigned reason, void* reserved)
-{
-  (void) instance;
-  (void) reason;
-  (void) reserved;
-  return 1;
-}
-#endif
+
 GLboolean GLEWAPIENTRY glewIsSupported (const char* name)
 {
   const GLubyte* pos = (const GLubyte*)name;

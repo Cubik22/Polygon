@@ -1,7 +1,7 @@
+#include "GL/glew.h"
 #include <iostream>
 #include "Intersector.h"
 #include "Polygon.h"
-#include "GL/glew.h"
 #include "GLFW/glfw3.h"
 
 #define WIDTH 600
