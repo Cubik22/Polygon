@@ -10,18 +10,21 @@ void Intersector::calculateLines(){
     c2 = a2 * s1.x + b2 * s1.y;
 }
 
-Intersector::Intersector() : calculated{false}, toleranceParallelism{1.0E-5}, toleranceOnVertex{1.0E-4}, intersectionPoint{0.0, 0.0} {}
+Intersector::Intersector() : intersectionCalculated{false}, relativePositionCalculated{false},
+                             toleranceParallelism{1.0E-5}, toleranceOnVertex{1.0E-4}, intersectionPoint{0.0, 0.0} {}
 
 void Intersector::setSegment1(const Vector2f &_r1, const Vector2f &_r2){
     r1 = _r1;
     r2 = _r2;
-    calculated = false;
+    intersectionCalculated = false;
+    relativePositionCalculated = false;
 }
 
 void Intersector::setSegment2(const Vector2f &_s1, const Vector2f &_s2){
     s1 = _s1;
     s2 = _s2;
-    calculated = false;
+    intersectionCalculated = false;
+    relativePositionCalculated = false;
 }
 
 void Intersector::setToleranceParallelism(double tolerance){
@@ -37,21 +40,21 @@ void Intersector::setToleranceOnVertex(float tolerance){
 }
 
 Vector2f Intersector::getIntersectionPoint(){
-    if (!calculated){
+    if (!intersectionCalculated){
         calculateIntersection();
     }
     return intersectionPoint;
 }
 
 IntersectionType Intersector::getIntersectionType(){
-    if (!calculated){
+    if (!intersectionCalculated){
         return calculateIntersection();
     }
     return intersectionType;
 }
 
 IntersectionType Intersector::calculateIntersection(bool isFirstLine, bool isSecondLine){
-    calculated = true;
+    intersectionCalculated = true;
     calculateLines();
     double determinant = a1 * b2 - a2 * b1;
     if (abs(determinant) > toleranceParallelism){
@@ -87,4 +90,45 @@ IntersectionType Intersector::calculateIntersection(bool isFirstLine, bool isSec
         intersectionType = IntersectionType::Parallel;
     }
     return intersectionType;
+}
+
+RelativePosition Intersector::calculateRelativePosition(){
+    relativePositionCalculated = true;
+    Vector2f v1 = r2 - r1;
+    Vector2f v2 = s2 - s1;
+    double dotProduct = v1.x * v2.y - v1.y * v2.x;
+    if (dotProduct > toleranceParallelism){
+        relativePosition = RelativePosition::Positive;
+    } else if (dotProduct < -toleranceParallelism){
+        relativePosition = RelativePosition::Negative;
+    } else{
+        relativePosition = RelativePosition::Parallel;
+    }
+    return relativePosition;
+}
+
+RelativePosition Intersector::getRelativePosition() const{
+    return relativePosition;
+}
+
+std::ostream& operator<<(std::ostream& ostrem, const IntersectionType& type){
+    if (type == IntersectionType::Parallel){
+        ostrem << "Parallel";
+    } else if (type == IntersectionType::InsideSegment){
+        ostrem << "Inside segment";
+    } else if (type == IntersectionType::OutsideSegment){
+        ostrem << "Outside segment";
+    }
+    return ostrem << "\n";
+}
+
+std::ostream& operator<<(std::ostream& ostrem, const RelativePosition& type){
+    if (type == RelativePosition::Parallel){
+        ostrem << "Parallel";
+    } else if (type == RelativePosition::Positive){
+        ostrem << "Positive";
+    } else if (type == RelativePosition::Negative){
+        ostrem << "Negative";
+    }
+    return ostrem << "\n";
 }

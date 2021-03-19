@@ -21,6 +21,14 @@ Vector2f Vector2f::operator-(const Vector2f &other) const{
     return {x - other.x, y - other.y};
 }
 
+double Vector2f::dot(const Vector2f& other) const{
+    return x * other.x + y * other.y;
+}
+
 double Vector2f::normSquared() const{
     return x * x + y * y;
+}
+
+std::ostream& operator<< (std::ostream& ostrem, const Vector2f& point){
+    return ostrem << "x: " << point.x << " y: " << point.y;
 }

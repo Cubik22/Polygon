@@ -2,6 +2,7 @@
 #define INTERSECTOR_H
 
 #include "Vector2f.h"
+#include <iostream>
 
 enum class IntersectionType{
     Parallel = 0,
@@ -10,12 +11,24 @@ enum class IntersectionType{
     OnVertex = 3
 };
 
+enum class RelativePosition{
+    Parallel = 0,
+    Positive = 1,
+    Negative = 2
+};
+
+std::ostream& operator<<(std::ostream& ostrem, const IntersectionType& type);
+
+std::ostream& operator<<(std::ostream& ostrem, const RelativePosition& type);
+
 class Intersector{
 private:
-    bool calculated;
+    bool intersectionCalculated;
+    bool relativePositionCalculated;
     double toleranceParallelism;
     float toleranceOnVertex;
     IntersectionType intersectionType;
+    RelativePosition relativePosition;
     Vector2f intersectionPoint;
     double a1, b1, c1;
     double a2, b2, c2;
@@ -33,6 +46,8 @@ public:
     Vector2f getIntersectionPoint();
     IntersectionType getIntersectionType();
     IntersectionType calculateIntersection(bool isFirstLine = false, bool isSecondLine = false);
+    RelativePosition calculateRelativePosition();
+    RelativePosition getRelativePosition() const;
 };
 
 #endif // INTERSECTOR_H

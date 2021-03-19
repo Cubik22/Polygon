@@ -19,7 +19,21 @@ const char *Renderer::getFragmentShader() const{
             "};";
 }
 
-Renderer::Renderer() : shader(getVertexShader(), getFragmentShader()) {}
+Renderer::Renderer() : shader(getVertexShader(), getFragmentShader()) {
+    colors = {
+        255,   0,   0,    //red
+          0, 255,   0,    //lime
+          0,   0, 255,    //blue
+        255, 255,   0,  //yellow
+          0, 255, 255,  //cyan
+        255, 250, 205,//lemon
+        255,   0, 255,  //magenta
+        139,   0,   0,    //dark red
+          0, 128,   0,     //green
+        138,  43, 226,  //blue violet
+        255,  20, 147   //deep pink
+    };
+}
 
 void Renderer::addShape(const Shape* shape){
     shapes.push_back(shape);
@@ -30,14 +44,22 @@ void Renderer::replaceShape(unsigned int position, const Shape *shape){
         delete shapes[position];
         shapes[position] = shape;
     } else{
-        shapes.push_back(shape);
+        addShape(shape);
+    }
+}
+
+void Renderer::removeLastShape(){
+    if (shapes.size() > 0){
+        delete shapes[shapes.size() - 1];
+        shapes.pop_back();
     }
 }
 
 void Renderer::drawShapes() const{
     shader.bind();
-    for (std::vector<const Shape*>::const_iterator it = shapes.begin(); it != shapes.end(); it++){
-        const Shape* shape = *it;
+    for (unsigned int i = 0; i < shapes.size(); i++){
+        const Shape* shape = shapes[i];
+        setPolygonColorRGB(colors[3 * i], colors[3 * i + 1], colors[3 * i + 2]);
         shape->draw();
     }
 }
@@ -71,4 +93,5 @@ void Renderer::initGLEW(){
     std::cout << "MODEL: " << model << std::endl;
 
     glEnable(GL_PROGRAM_POINT_SIZE);
+    glLineWidth(3);
 }

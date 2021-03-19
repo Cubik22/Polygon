@@ -10,6 +10,10 @@ private:
     double yMouse;
     bool mouseLeftPressed;
     bool mouseLeftClick;
+    bool enterPressed;
+    bool enterClick;
+    bool backPressed;
+    bool backClick;
 public:
     const unsigned int WIDTH;
     const unsigned int HEIGHT;
@@ -22,11 +26,13 @@ public:
     void waitEvents();
     void processImput();
     bool isLeftClick() const;
-    bool isEnterPressed() const;
+    bool isEnterClick() const;
+    bool isBackClick() const;
 
     static void initiGLFW();
     static void terminateGLFW();
 
+    friend void updatePressedClick(bool glPressed, bool& pressed, bool& click);
     friend void mouseCallback(GLFWwindow* glWindow, double xpos, double ypos);
 };
 

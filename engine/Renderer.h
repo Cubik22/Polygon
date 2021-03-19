@@ -7,6 +7,7 @@
 class Renderer{
 private:
     std::vector<const Shape*> shapes;
+    std::vector<unsigned int> colors;
 
     Shader shader;
     const char* getVertexShader() const;
@@ -15,6 +16,7 @@ public:
     Renderer();
     void addShape(const Shape* shape);
     void replaceShape(unsigned int position, const Shape* shape);
+    void removeLastShape();
     void drawShapes() const;
     void clear() const;
     void setPolygonColorFloat(float r, float g, float b) const;

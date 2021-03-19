@@ -4,22 +4,41 @@
 #include <vector>
 #include <list>
 #include <iterator>
-#include <exception>
 #include "Intersector.h"
+#include "Network.h"
 
 class Polygon{
 private:
     std::vector<Vector2f> points;
-    std::list<unsigned int> indices;
+    std::vector<unsigned int> indices;
+    Node* startNode;
+    RelativePosition orientation;
     Vector2f p1;
     Vector2f p2;
+    void calculateOrientation();
+    bool isNodeIntersectionDouble(const Node* node);
+    void sortIntersectionsNetwork(const std::vector<Node*>& nodes);
+    void createSmallPolygon(const Node* node, std::vector<std::vector<unsigned int>*>& polygonsIndices);
+    void continueSmallPolygon(const Node* node, const Node* initialNode, RelativePosition relativePosition,
+                              std::vector<unsigned int>& indicesPoli, std::vector<std::vector<unsigned int>*>& polygonsIndices);
+    void pushAndGo(std::vector<Vector2f>& positionsPoli, std::list<unsigned int>& indicesPoli, std::list<unsigned int>::const_iterator& it);
 public:
     Polygon();
-    Polygon(const std::vector<Vector2f>& _points, const std::list<unsigned int>& _indices);
+    ~Polygon();
+    Polygon(const std::vector<Vector2f>& _points, const std::vector<unsigned int>& _indices);
+    void setBody(const std::vector<Vector2f>& _points, const std::vector<unsigned int>& _indices);
     void setSegment(const Vector2f& _p1, const Vector2f& _p2);
     const Vector2f& getPoint(unsigned int index) const;
     unsigned int getNumberIndices() const;
-    void addPoint(const Vector2f& point, unsigned int previous);
+    const std::vector<Vector2f>& getPoints() const;
+    const std::vector<unsigned int>& getIndices() const;
+    //void addPointAfter(const Vector2f& point, unsigned int previous);
+    //void addPointAt(const Vector2f& point, std::list<unsigned int>::const_iterator& it);
+    void createNetwork();
+    std::vector<std::vector<unsigned int>*> cut();
+    const Node* getStartNode() const;
+    void printVertices() const;
+    void printIndices() const;
 };
 
 #endif //POLYGON_H

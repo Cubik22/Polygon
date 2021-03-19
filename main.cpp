@@ -5,28 +5,22 @@
 #include "Window.h"
 #include "Application.h"
 
-#define WIDTH 600
-#define HEIGHT 600
+#define WIDTH 1200
+#define HEIGHT 800
 
 #define BLACK 0.0, 0.0, 0,0
 #define WHITE 1.0, 1.0, 1.0
 
-std::ostream& operator<< (std::ostream& ostrem, const Vector2f& point){
-    return ostrem << "x: " << point.x << " y: " << point.y;
-}
-
-std::ostream& operator<< (std::ostream& ostrem, const IntersectionType& type){
-    if (type == IntersectionType::Parallel){
-        return ostrem << "Parallel";
-    } else if (type == IntersectionType::InsideSegment){
-        return ostrem << "Inside segment";
-    } else if (type == IntersectionType::OutsideSegment){
-        return ostrem << "Outside segment";
+std::ostream& operator<< (std::ostream& ostrem, const std::vector<unsigned int>& vector){
+    for (unsigned int i = 0; i < vector.size(); i++){
+        ostrem << vector[i] << " ";
     }
-    return ostrem;
+    return ostrem << "\n";
 }
 
 int main(){
+    //srand (time(NULL));
+
     Intersector inter;
     inter.setSegment1({0, 2}, {0, 0});
     inter.setSegment2({2, 1}, {1, 1});
@@ -73,6 +67,9 @@ int main(){
     while (!window.shouldClose() && !end){
         renderer.clear();
         window.processImput();
+        if (window.isBackClick()){
+            app.removeLastVertex();
+        }
         bool added = app.addVertex({(float)window.getXMouse(), (float)window.getYMouse()});
         renderer.replaceShape(0, new Lines(app.getVertices(), app.getIndices()));
 
@@ -82,16 +79,70 @@ int main(){
             app.removeLastVertex();
         }
 
-        if (window.isEnterPressed()){
-            end = true;
-            app.closePolygon();
+        if (window.isEnterClick()){
+            if (app.closePolygon()){
+                end = true;
+            } else{
+                std::cout << "Cannot close polygon\n";
+            }
         }
 
         window.swapBuffer();
         window.waitEvents();
     }
 
-    renderer.replaceShape(0, new Lines(app.getVertices(), app.getIndices()));
+    app.createMainPolygon();
+    const Polygon& polygon = app.getPolygon();
+    renderer.replaceShape(0, new LinesPointIndices(polygon.getPoints(), polygon.getIndices()));
+    renderer.clear();
+    renderer.drawShapes();
+    window.swapBuffer();
+    renderer.clear();
+    renderer.drawShapes();
+
+    end = false;
+    while (!window.shouldClose() && !end){
+        renderer.clear();
+        window.processImput();
+
+        if (window.isBackClick()){
+            app.removeSegmentPoint();
+        }
+
+        app.addSegmentPoint({(float)window.getXMouse(), (float)window.getYMouse()});
+        if (app.getSegmentSize() == 1){
+            renderer.replaceShape(1, new Lines(app.getSegmentPoints(), {}));
+        } else if (app.getSegmentSize() == 2){
+            renderer.replaceShape(1, new Lines(app.getSegmentPoints(), {0, 1}));
+        }
+
+        renderer.drawShapes();
+
+        if (!window.isLeftClick()){
+            app.removeSegmentPoint();
+        }
+
+        if (app.getSegmentSize() == 2){
+            end = true;
+        }
+
+        window.swapBuffer();
+        window.waitEvents();
+    }
+
+    //renderer.replaceShape(1, new Lines(app.getSegmentPoints(), {0, 1}));
+    renderer.removeLastShape();
+    renderer.removeLastShape();
+    app.cutMainPolygon();
+    const std::vector<std::vector<unsigned int>*>& polygonsIndices = app.getPolygonsIndices();
+    std::cout << "----------------------------------\n";
+    std::cout << polygonsIndices.size() << "\n";
+    for (unsigned int i = 0; i < polygonsIndices.size(); i++){
+        std::cout << *polygonsIndices[i];
+        Shape* shapeNuova = new LinesPointIndices(polygon.getPoints(), *polygonsIndices[i]);
+        //std::cout << "added\n";
+        renderer.addShape(shapeNuova);
+    }
     renderer.clear();
     renderer.drawShapes();
     window.swapBuffer();
@@ -99,7 +150,6 @@ int main(){
     renderer.drawShapes();
 
     while (!window.shouldClose()){
-        //window.swapBuffer();
         window.waitEvents();
     }
 

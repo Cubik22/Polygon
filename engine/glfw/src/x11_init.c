@@ -1068,6 +1068,7 @@ int _glfwPlatformInit(void)
     }
 
     _glfw.x11.screen = DefaultScreen(_glfw.x11.display);
+    //printf("BUG: %d\n", _glfw.x11.screen);
     _glfw.x11.root = RootWindow(_glfw.x11.display, _glfw.x11.screen);
     _glfw.x11.context = XUniqueContext();
 

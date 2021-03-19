@@ -67,6 +67,7 @@ static GLFWbool chooseGLXFBConfig(const _GLFWfbconfig* desired,
 
     nativeConfigs =
         glXGetFBConfigs(_glfw.x11.display, _glfw.x11.screen, &nativeCount);
+    //printf("nativ: %p\n", *nativeConfigs);
     if (!nativeConfigs || !nativeCount)
     {
         _glfwInputError(GLFW_API_UNAVAILABLE, "GLX: No GLXFBConfigs returned");
@@ -207,6 +208,9 @@ static void swapIntervalGLX(int interval)
 
 static int extensionSupportedGLX(const char* extension)
 {
+    //printf("_glfw.glx.QueryExtensionsString: %p\n", *glXQueryExtensionsString(_glfw.x11.display, _glfw.x11.screen));
+    //printf("ciao\n");
+    //const char* extensions = "0x47";
     const char* extensions =
         glXQueryExtensionsString(_glfw.x11.display, _glfw.x11.screen);
     if (extensions)

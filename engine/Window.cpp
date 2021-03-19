@@ -1,6 +1,20 @@
 #include "Window.h"
 #include <iostream>
 
+void updatePressedClick(bool glPressed, bool& pressed, bool& click){
+    if (glPressed){
+        if (!pressed){
+            click = true;
+        } else{
+            click = false;
+        }
+        pressed = true;
+    } else{
+        click = false;
+        pressed = false;
+    }
+}
+
 void mouseCallback(GLFWwindow* glWindow, double xpos, double ypos){
     Window* window = (Window*)glfwGetWindowUserPointer(glWindow);
     window->xMouse =  2 * (xpos - window->WIDTH / 2.0) / window->WIDTH;
@@ -52,25 +66,23 @@ void Window::waitEvents(){
 
 void Window::processImput(){
     bool glMouseLeftPressed = glfwGetMouseButton(glWindow, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS;
-    if (glMouseLeftPressed){
-        if (!mouseLeftPressed){
-            mouseLeftClick = true;
-        } else{
-            mouseLeftClick = false;
-        }
-        mouseLeftPressed = true;
-    } else{
-        mouseLeftClick = false;
-        mouseLeftPressed = false;
-    }
+    updatePressedClick(glMouseLeftPressed, mouseLeftPressed, mouseLeftClick);
+    bool glEnterPressed = glfwGetKey(glWindow, GLFW_KEY_ENTER) == GLFW_PRESS;
+    updatePressedClick(glEnterPressed, enterPressed, enterClick);
+    bool glBackPressed = glfwGetKey(glWindow, GLFW_KEY_BACKSPACE) == GLFW_PRESS;
+    updatePressedClick(glBackPressed, backPressed, backClick);
 }
 
 bool Window::isLeftClick() const{
     return mouseLeftClick;
 }
 
-bool Window::isEnterPressed() const{
-    return glfwGetKey(glWindow, GLFW_KEY_ENTER) == GLFW_PRESS;
+bool Window::isEnterClick() const{
+    return enterClick;
+}
+
+bool Window::isBackClick() const{
+    return backClick;
 }
 
 void Window::initiGLFW(){

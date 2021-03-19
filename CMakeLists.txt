@@ -67,6 +67,8 @@ list(APPEND source_code ${CMAKE_CURRENT_SOURCE_DIR}/src/Intersector.cpp)
 list(APPEND source_code ${CMAKE_CURRENT_SOURCE_DIR}/src/Intersector.h)
 list(APPEND source_code ${CMAKE_CURRENT_SOURCE_DIR}/src/Application.cpp)
 list(APPEND source_code ${CMAKE_CURRENT_SOURCE_DIR}/src/Application.h)
+list(APPEND source_code ${CMAKE_CURRENT_SOURCE_DIR}/src/Network.cpp)
+list(APPEND source_code ${CMAKE_CURRENT_SOURCE_DIR}/src/Network.h)
 
 # Add Unit Tests code
 #include_directories(${CMAKE_CURRENT_SOURCE_DIR}/test)
