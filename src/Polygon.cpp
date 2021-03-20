@@ -2,18 +2,21 @@
 #include <iostream>
 #include <exception>
 
-Polygon::Polygon(){}
 
-Polygon::~Polygon(){
-    //std::cout <<"polygon deleted\n";
-    delete startNode;
-}
+const double Polygon::BIG_DOUBLE = 1.0E+10;
+
+Polygon::Polygon(){}
 
 Polygon::Polygon(const std::vector<Vector2f> &_points, const std::vector<unsigned int> &_indices) :
     points{_points}, indices{_indices}{
     if (_points.size() != _indices.size()){
         throw std::runtime_error("Points vector and indices list should have the same size");
     }
+}
+
+Polygon::~Polygon(){
+    //std::cout <<"polygon deleted\n";
+    delete startNode;
 }
 
 void Polygon::setBody(const std::vector<Vector2f> &_points, const std::vector<unsigned int> &_indices){
@@ -29,7 +32,7 @@ void Polygon::setSegment(const Vector2f &_p1, const Vector2f &_p2){
     p2 = _p2;
 }
 
-const Vector2f &Polygon::getPoint(unsigned int index) const{
+const Vector2f& Polygon::getPoint(unsigned int index) const{
     if (index >= getNumberIndices()){
         throw std::runtime_error("Array out of bound");
     }
@@ -48,51 +51,44 @@ const std::vector<unsigned int>& Polygon::getIndices() const{
     return indices;
 }
 
-//void Polygon::addPointAfter(const Vector2f &point, unsigned int previous){
-//    std::vector<unsigned int>& indices = body.indices;
-//    body.points.push_back(point);
-//    bool find = false;
-//    for (std::list<unsigned int>::iterator it = indices.begin(); it != indices.end(); it++){
-//        if (find == true){
-//            indices.insert(it, getNumberIndices());
-//            numberIndices++;
-//            return;
-//        }
-//        if (*it == previous){
-//            find = true;
-//        }
-//    }
-//    indices.push_back(getNumberIndices());
-//    numberIndices++;
-//}
+const Node* Polygon::getStartNode() const{
+    return startNode;
+}
 
-//void Polygon::addPointAt(const Vector2f &point, std::list<unsigned int>::const_iterator& it){
-//    std::list<unsigned int>& indices = body.indices;
-//    body.points.push_back(point);
-//    //it++;
-//    if (it != indices.end()){
-//        startIndices = indices.insert(it, numberIndices);
-//    } else{
-//        //chiamata
-//        indices.push_back(numberIndices);
-//    }
-//    numberIndices++;
-//}
+unsigned int Polygon::getNumberIntersections() const{
+    return numberIntersections;
+}
+
+void Polygon::printVertices() const{
+    std::cout << "Printing polygon vertices\n";
+    for (unsigned int i = 0; i < points.size(); i++){
+        std::cout << i << " x: " << points[i].x << " y: " << points[i].y << "\n";
+    }
+}
+
+void Polygon::printIndices() const{
+    std::cout << "Printing polygon indices\n";
+    for (unsigned int i = 0; i < indices.size(); i++){
+        std::cout << i << " " << indices[i] << "\n";
+    }
+}
 
 void Polygon::createNetwork(){
-    // TODO: quando non ci sono intersezioni
-    std::vector<Node*> unorderedNodes;
+    // stores the intersection Nodes in order to sort them after
+    std::vector<Node*> unorderedIntersectionNodes;
     Intersector inter;
     inter.setSegment1(p1, p2);
     unsigned int numberIndices = getNumberIndices();
-    unsigned int numberIntersections = 0;
-    double maxDistance = 0.0;
-    Node* wrongEdge = nullptr;
+    numberIntersections = 0;
+
+    Vector2f segment = p2 - p1;
+    double minProduct = Polygon::BIG_DOUBLE;
+    Node* minIntersectionNode = nullptr;
+
     Node* firstNode = nullptr;
-    Node* firstIntersection = nullptr;
     Node* node = nullptr;
     Node* previous = nullptr;
-    Node* down = nullptr;
+
     for (unsigned int i = 0; i < numberIndices; i++){
         node = new Node(indices[i]);
         if (previous != nullptr){
@@ -109,39 +105,58 @@ void Polygon::createNetwork(){
             const Vector2f intersectionPoint = inter.getIntersectionPoint();
             points.push_back(intersectionPoint);
             node = new Node(numberIndices + numberIntersections);
-            unorderedNodes.push_back(node);
+            unorderedIntersectionNodes.push_back(node);
             numberIntersections++;
             node->previous = previous;
             previous->next = node;
             previous = node;
-            if (down != nullptr){
-                node->down = down;
-                down->up = node;
-                double distanceUp = (points[down->up->getIndex()] - points[down->getIndex()]).normSquared();
-                if (distanceUp > maxDistance){
-                    maxDistance = distanceUp;
-                    wrongEdge = down;
-                }
-            } else{
-                firstIntersection = node;
+
+            double product = segment.dot(points[node->getIndex()] - p1);
+            if (product < minProduct){
+                minIntersectionNode = node;
+                minProduct = product;
             }
-            down = node;
         }
     }
-    //std::cout << "fine ciclo\n";
+    //std::cout << "end loop\n";
+    if (firstNode == nullptr){
+        std::cerr << "ERROR: first node is nullptr\n";
+        exit(-1);
+    }
     firstNode->previous = previous;
     previous->next = firstNode;
-    firstIntersection->down = down;
-    down->up = firstIntersection;
-    double distanceUp = (points[down->up->getIndex()] - points[down->getIndex()]).normSquared();
-    if (distanceUp > maxDistance){
-        wrongEdge = down;
+
+    if (minIntersectionNode != nullptr){
+        startNode = minIntersectionNode;
+        sortIntersectionsNetwork(unorderedIntersectionNodes);
+
+        calculateOrientation();
+        std::cout << std::endl;
+
+    } else if (numberIntersections == 0){
+        std::cout << "No intersections\n";
+        startNode = firstNode;
+    } else{
+        std::cerr << "ERROR: problems when setting startNode\n";
+        startNode = firstNode;
     }
-    startNode = wrongEdge;
-    calculateOrientation();
-    std::cout << std::endl;
-    sortIntersectionsNetwork(unorderedNodes);
 }
+
+std::vector<std::vector<unsigned int>*> Polygon::cut(){
+    std::vector<std::vector<unsigned int>*> polygonsIndices;
+    if (numberIntersections > 0){
+        startNode->touched = true;
+        std::cout << startNode->getIndex() << " starting the cut\n";
+        polygonsIndices.push_back(new std::vector<unsigned int>);
+        std::vector<unsigned int>& indicesPoliCreation = *polygonsIndices[0];
+        continueSmallPolygon(startNode, startNode, RelativePosition::Parallel, indicesPoliCreation, polygonsIndices);
+    } else{
+        polygonsIndices.push_back(new std::vector<unsigned int>(indices));
+    }
+    return  polygonsIndices;
+}
+
+// PRIVATE
 
 void Polygon::calculateOrientation(){
     Intersector inter;
@@ -157,7 +172,7 @@ void Polygon::calculateOrientation(){
 
 const Node* Polygon::getNextIntersection(const Node *node){
     if (node->up == nullptr && node->down == nullptr){
-        std::cout << "ERROR: returned nullptr from Polygon::getNextIntersection\n";
+        std::cout << node->getIndex() << "ERROR: returned nullptr from Polygon::getNextIntersection\n";
         return nullptr;
     }
     if (node->up == nullptr){
@@ -170,47 +185,41 @@ const Node* Polygon::getNextIntersection(const Node *node){
     inter.setSegment1(points[node->previous->getIndex()], points[node->up->getIndex()]);
     inter.setSegment2(points[node->next->getIndex()], points[node->up->getIndex()]);
     if (inter.calculateRelativePosition() == orientation){
-        std::cout << node->getIndex() << " orientation uguale\n";
+        std::cout << node->getIndex() << " same orientation\n";
         return node->up;
     } else{
-        std::cout << node->getIndex() << " orientation opposta\n";
+        std::cout << node->getIndex() << " opposite orientation\n";
         return node->down;
     }
 }
 
 void Polygon::sortIntersectionsNetwork(const std::vector<Node*>& nodes){
     unsigned int nodesLenght = nodes.size();
-    for (unsigned int i = 0; i < nodesLenght; i++){
-        nodes[i]->down = nullptr;
-        nodes[i]->up = nullptr;
+    if (nodesLenght == 0){
+        return;
     }
+
+    if (startNode == nullptr){
+        std::cerr << "ERROR: start node is nullptr\n";
+        exit(-1);
+    }
+    startNode->down = startNode;
+    Node* minNode = startNode;
+    Node* node = startNode;
+
     Vector2f segment = p2 - p1;
-    double minProduct = segment.dot(points[nodes[0]->getIndex()]);
-    double product;
-    Node* minNode = nodes[0];
     for (unsigned int i = 1; i < nodesLenght; i++){
-        product = segment.dot(points[nodes[i]->getIndex()] - p1);
-        if (product < minProduct){
-            minProduct = product;
-            minNode = nodes[i];
-        }
-    }
-    //std::cout << "minNode: " << minNode->getIndex() << "\n";
-    minNode->down = minNode;
-    startNode = minNode;
-    Node* node = minNode;
-    for (unsigned int i = 1; i < nodesLenght; i++){
-        minProduct = 1.0E+10;
+        //std::cout << "node: " << minNode->getIndex() << "\n";
+        double minProduct = Polygon::BIG_DOUBLE;
         for (unsigned int n = 0; n < nodesLenght; n++){
             if (nodes[n]->down == nullptr){
-                product = segment.dot(points[nodes[n]->getIndex()] - p1);
+                double product = segment.dot(points[nodes[n]->getIndex()] - p1);
                 if (product < minProduct){
                     minProduct = product;
                     minNode = nodes[n];
                 }
             }
         }
-        //std::cout << "node: " << minNode->getIndex() << "\n";
         minNode->down = node;
         node->up = minNode;
         node = minNode;
@@ -218,117 +227,47 @@ void Polygon::sortIntersectionsNetwork(const std::vector<Node*>& nodes){
     startNode->down = nullptr;
 }
 
-void Polygon::createSmallPolygon(const Node* node, std::vector<std::vector<unsigned int>*>& polygonsIndices){
-    std::cout << node->getIndex() << " create samll polygon\n";
-    const Node* initialNode = node;
-    polygonsIndices.push_back(new std::vector<unsigned int>);
-    std::vector<unsigned int>& indicesPoli = *polygonsIndices[polygonsIndices.size() - 1];
-    indicesPoli.push_back(node->getIndex());
-    node = node->next;
-    Intersector inter;
-    inter.setSegment1(p1, points[node->getIndex()]);
-    inter.setSegment2(p2, points[node->getIndex()]);
-    RelativePosition relativePosition = inter.calculateRelativePosition();
-    while (inter.calculateRelativePosition() == relativePosition) {
-        indicesPoli.push_back(node->getIndex());
-        node = node->next;
-        inter.setSegment1(p1, points[node->getIndex()]);
-        inter.setSegment2(p2, points[node->getIndex()]);
-    }
-    if (node != initialNode){
-        indicesPoli.push_back(node->getIndex());
-    }
-    if (!node->touched){
-        node->touched = true;
-        const Node* tmp = node;
-        node = getNextIntersection(node);
-        if (node != nullptr && node != initialNode){
-            node->touched = true;
-            continueSmallPolygon(node, initialNode, relativePosition, indicesPoli, polygonsIndices);
-        }
-        createSmallPolygon(tmp, polygonsIndices);
-    }
-}
-
 void Polygon::continueSmallPolygon(const Node* node, const Node* initialNode, RelativePosition relativePosition,
                                    std::vector<unsigned int>& indicesPoli, std::vector<std::vector<unsigned int>*>& polygonsIndices){
-    std::cout << node->getIndex() << " continue samll polygon\n";
     indicesPoli.push_back(node->getIndex());
     node = node->next;
     Intersector inter;
     inter.setSegment1(p1, points[node->getIndex()]);
     inter.setSegment2(p2, points[node->getIndex()]);
+    if (relativePosition == RelativePosition::Parallel){
+        relativePosition = inter.calculateRelativePosition();
+    }
     while (inter.calculateRelativePosition() == relativePosition) {
         indicesPoli.push_back(node->getIndex());
         node = node->next;
         inter.setSegment1(p1, points[node->getIndex()]);
         inter.setSegment2(p2, points[node->getIndex()]);
     }
+    std::cout << node->getIndex() << " arrived\n";
     if (node != initialNode){
         indicesPoli.push_back(node->getIndex());
+    } else{
+        std::cout << node->getIndex() << " closing polygon other way\n";
     }
     if (!node->touched){
+        std::cout << node->getIndex() << " is not already touched\n";
         node->touched = true;
-        const Node* tmp = node;
+        const Node* nodeCreation = node;
         node = getNextIntersection(node);
+        if (node == initialNode){
+            std::cout << node->getIndex() << " closing polygon\n";
+        }
         if (node != nullptr && node != initialNode){
             node->touched = true;
+            std::cout << node->getIndex() << " continue samll polygon\n";
             continueSmallPolygon(node, initialNode, relativePosition, indicesPoli, polygonsIndices);
         }
-        createSmallPolygon(tmp, polygonsIndices);
+        std::cout << nodeCreation->getIndex() << " create samll polygon\n";
+        polygonsIndices.push_back(new std::vector<unsigned int>);
+        std::vector<unsigned int>& indicesPoliCreation = *polygonsIndices[polygonsIndices.size() - 1];
+        continueSmallPolygon(nodeCreation, nodeCreation, RelativePosition::Parallel, indicesPoliCreation, polygonsIndices);
+    } else{
+        std::cout << node->getIndex() << " is already touched\n";
     }
 }
 
-std::vector<std::vector<unsigned int>*> Polygon::cut(){
-    std::vector<std::vector<unsigned int>*> polygonsIndices;
-    startNode->touched = true;
-    createSmallPolygon(startNode, polygonsIndices);
-//    Node* node = startNode;
-//    Intersector inter;
-//    inter.setSegment1(p1, points[node->getIndex()]);
-//    inter.setSegment2(p2, points[node->getIndex()]);
-//    RelativePosition posPolygon = inter.calculateRelativePosition();
-//    int epoch = 0;
-//    do {
-//        std::vector<unsigned int> indicesPoli;
-//        indicesPoli.push_back(node->getIndex());
-//        node = node->next;
-//        inter.setSegment1(p1, points[node->getIndex()]);
-//        inter.setSegment2(p2, points[node->getIndex()]);
-//        RelativePosition posTemp = inter.calculateRelativePosition();
-//        //std::cout << "posPolygon: " << posPolygon << "     posTemp: " << posTemp << "\n";
-//        if (posPolygon == RelativePosition::Parallel){
-//            posPolygon = posTemp;
-//        }
-//        //int tempo = 0;
-//        while (posTemp == posPolygon){
-//            //std::cout << *it <<"\n";
-//            indicesPoli.push_back(node->getIndex());
-//            node = node->next;
-//            inter.setSegment1(p1, points[node->getIndex()]);
-//            inter.setSegment2(p2, points[node->getIndex()]);
-//            posTemp = inter.calculateRelativePosition();
-//        }
-//        indicesPoli.push_back(node->getIndex());
-//        polygonsIndices.push_back(indicesPoli);
-//        posPolygon = posTemp;
-//        //std::cout << "*it: " << *it << "        *startIndices: " << *startIndices << "\n";
-//    } while (node != startNode);
-    return  polygonsIndices;
-}
-
-const Node* Polygon::getStartNode() const{
-    return startNode;
-}
-
-void Polygon::printVertices() const{
-    for (unsigned int i = 0; i < points.size(); i++){
-        std::cout << i << " x: " << points[i].x << " y: " << points[i].y << "\n";
-    }
-}
-
-void Polygon::printIndices() const{
-    for (unsigned int i = 0; i < indices.size(); i++){
-        std::cout << i << " " << indices[i] << "\n";
-    }
-}

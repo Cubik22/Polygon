@@ -1,14 +1,6 @@
 #include "Intersector.h"
 #include "math.h"
 
-void Intersector::calculateLines(){
-    a1 = r2.y - r1.y;
-    b1 = r1.x - r2.x;
-    c1 = a1 * r1.x + b1 * r1.y;
-    a2 = s2.y - s1.y;
-    b2 = s1.x - s2.x;
-    c2 = a2 * s1.x + b2 * s1.y;
-}
 
 Intersector::Intersector() : intersectionCalculated{false}, relativePositionCalculated{false},
                              toleranceParallelism{1.0E-7}, toleranceOnVertex{1.0E-7}, intersectionPoint{0.0, 0.0} {}
@@ -30,12 +22,16 @@ void Intersector::setSegment2(const Vector2f &_s1, const Vector2f &_s2){
 void Intersector::setToleranceParallelism(double tolerance){
     if (tolerance > 0){
         toleranceParallelism = tolerance;
+    } else{
+        std::cout << "Tolerance Parallelism not set: tolerance cannot be negative\n";
     }
 }
 
 void Intersector::setToleranceOnVertex(float tolerance){
     if (tolerance > 0){
         toleranceOnVertex = tolerance;
+    } else{
+        std::cout << "Tolerance On Vertex not set: tolerance cannot be negative\n";
     }
 }
 
@@ -51,6 +47,13 @@ IntersectionType Intersector::getIntersectionType(){
         return calculateIntersection();
     }
     return intersectionType;
+}
+
+RelativePosition Intersector::getRelativePosition(){
+    if (!relativePositionCalculated){
+        return calculateRelativePosition();
+    }
+    return relativePosition;
 }
 
 IntersectionType Intersector::calculateIntersection(bool isFirstLine, bool isSecondLine){
@@ -107,8 +110,13 @@ RelativePosition Intersector::calculateRelativePosition(){
     return relativePosition;
 }
 
-RelativePosition Intersector::getRelativePosition() const{
-    return relativePosition;
+void Intersector::calculateLines(){
+    a1 = r2.y - r1.y;
+    b1 = r1.x - r2.x;
+    c1 = a1 * r1.x + b1 * r1.y;
+    a2 = s2.y - s1.y;
+    b2 = s1.x - s2.x;
+    c2 = a2 * s1.x + b2 * s1.y;
 }
 
 std::ostream& operator<<(std::ostream& ostrem, const IntersectionType& type){

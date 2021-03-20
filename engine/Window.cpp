@@ -100,6 +100,8 @@ void Window::initiGLFW(){
     if (!glfwInit()){
         std::cerr << "ERROR: while initializing GLFW\n";
         exit(-1);
+    } else{
+        std::cout << "GLFW correctly initialized\n";
     }
 }
 

@@ -22,6 +22,20 @@ std::ostream& operator<<(std::ostream& ostrem, const IntersectionType& type);
 std::ostream& operator<<(std::ostream& ostrem, const RelativePosition& type);
 
 class Intersector{
+
+public:
+    Intersector();
+
+    void setSegment1(const Vector2f& _r1, const Vector2f& _r2);
+    void setSegment2(const Vector2f& _s1, const Vector2f& _s2);
+    void setToleranceParallelism(double tolerance);
+    void setToleranceOnVertex(float tolerance);
+    Vector2f getIntersectionPoint();
+    IntersectionType getIntersectionType();
+    RelativePosition getRelativePosition();
+    IntersectionType calculateIntersection(bool isFirstLine = false, bool isSecondLine = false);
+    RelativePosition calculateRelativePosition();
+
 private:
     bool intersectionCalculated;
     bool relativePositionCalculated;
@@ -36,18 +50,8 @@ private:
     Vector2f r2;
     Vector2f s1;
     Vector2f s2;
+
     void calculateLines();
-public:
-    Intersector();
-    void setSegment1(const Vector2f& _r1, const Vector2f& _r2);
-    void setSegment2(const Vector2f& _s1, const Vector2f& _s2);
-    void setToleranceParallelism(double tolerance);
-    void setToleranceOnVertex(float tolerance);
-    Vector2f getIntersectionPoint();
-    IntersectionType getIntersectionType();
-    IntersectionType calculateIntersection(bool isFirstLine = false, bool isSecondLine = false);
-    RelativePosition calculateRelativePosition();
-    RelativePosition getRelativePosition() const;
 };
 
 #endif // INTERSECTOR_H

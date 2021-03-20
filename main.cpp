@@ -4,6 +4,7 @@
 #include "Renderer.h"
 #include "Window.h"
 #include "Application.h"
+#include <filesystem>
 
 #define WIDTH 1200
 #define HEIGHT 800
@@ -25,6 +26,18 @@ void drawFillingDoubleBuffers(const Window& window, const Renderer& renderer){
 
 int main(){
 
+    Application app;
+    bool loadFromFile = false;
+    std::string consoleString;
+    std::cout << "Do you want to load vertices from file? [y/N] ";
+    std::getline(std::cin, consoleString);
+    if (consoleString == "y" || consoleString == "Y"){
+        std::cout << "Enter the name of the file you what to load vertices from: ";
+        std::getline(std::cin, consoleString);
+        loadFromFile = app.loadVerticesFromFile(consoleString);
+    }
+    std::cout << std::endl;
+
     Window::initiGLFW();
 
     Window window("Polygon", WIDTH, HEIGHT);
@@ -36,35 +49,35 @@ int main(){
 
     std::cout << std::endl;
 
-    Application app;
-
     bool end = false;
 
-    while (!window.shouldClose() && !end){
-        renderer.clear();
-        window.processImput();
-        if (window.isBackClick() || window.isEscClick()){
-            app.removeLastVertex();
-        }
-        bool added = app.addVertex({(float)window.getXMouse(), (float)window.getYMouse()});
-        renderer.replaceShape(0, new Lines(app.getVertices(), app.getIndices()));
-
-        renderer.drawShapes();
-
-        if (!window.isLeftClick() && added){
-            app.removeLastVertex();
-        }
-
-        if (window.isEnterClick()){
-            if (app.closePolygon()){
-                end = true;
-            } else{
-                std::cout << "Cannot close polygon\n";
+    if (!loadFromFile){
+        while (!window.shouldClose() && !end){
+            renderer.clear();
+            window.processImput();
+            if (window.isBackClick() || window.isEscClick()){
+                app.removeLastVertex();
             }
-        }
+            bool added = app.addVertex({(float)window.getXMouse(), (float)window.getYMouse()});
+            renderer.replaceShape(0, new Lines(app.getVertices(), app.getIndices()));
 
-        window.swapBuffer();
-        window.waitEvents();
+            renderer.drawShapes();
+
+            if (!window.isLeftClick() && added){
+                app.removeLastVertex();
+            }
+
+            if (window.isEnterClick()){
+                if (app.closePolygon()){
+                    end = true;
+                } else{
+                    std::cout << "Cannot close polygon\n";
+                }
+            }
+
+            window.swapBuffer();
+            window.waitEvents();
+        }
     }
 
     app.createMainPolygon();
@@ -102,25 +115,48 @@ int main(){
         window.waitEvents();
     }
 
-    //renderer.replaceShape(1, new Lines(app.getSegmentPoints(), {0, 1}));
     renderer.removeLastShape();
     renderer.removeLastShape();
     app.cutMainPolygon();
     const std::vector<std::vector<unsigned int>*>& polygonsIndices = app.getPolygonsIndices();
-    std::cout << "----------------------------------\n";
+
+    std::cout << std::endl;
     std::cout << "Number of polygons: " << polygonsIndices.size() << "\n";
     for (unsigned int i = 0; i < polygonsIndices.size(); i++){
         std::cout << *polygonsIndices[i] << "\n";
         Shape* shapeNuova = new LinesPointIndices(polygon.getPoints(), *polygonsIndices[i]);
         renderer.addShape(shapeNuova);
     }
+
     drawFillingDoubleBuffers(window, renderer);
 
     while (!window.shouldClose()){
+        window.processImput();
+        if (window.isEnterClick() || window.isBackClick() || window.isEscClick()){
+            break;
+        }
         window.waitEvents();
     }
 
     Window::terminateGLFW();
+
+    std::cout << std::endl;
+    std::cout << "Do you want to save vertices to file? [y/N] ";
+    std::getline(std::cin, consoleString);
+    if (consoleString == "y" || consoleString == "Y"){
+        std::cout << "Enter the name of the file you want to save vertices to: ";
+        std::getline(std::cin, consoleString);
+        if (std::filesystem::exists(consoleString)){
+            std::cout << "File already exist, are you sure you want to override it? [y/N] ";
+            std::string answer;
+            std::getline(std::cin, answer);
+            if (answer == "y" || answer == "Y"){
+                app.saveVerticesToFile(consoleString);
+            }
+        } else{
+            app.saveVerticesToFile(consoleString);
+        }
+    }
 
     return 0;
 

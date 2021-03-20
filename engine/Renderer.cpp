@@ -66,6 +66,8 @@ void Renderer::setPolygonColorRGB(unsigned int r, unsigned int g, unsigned int b
 void Renderer::initGLEW(){
     if (glewInit() != GLEW_OK){
         std::cerr << "ERROR initializing Glew\n";
+    } else{
+        std::cout << "Glew correctly initialized\n";
     }
     std::cout << "VERSION: " << glGetString(GL_VERSION) << "\n";
 
