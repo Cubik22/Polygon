@@ -6,7 +6,9 @@ VertexBufferLayout::VertexBufferLayout() : stride{0} {}
 VertexBufferLayout::~VertexBufferLayout() {}
 
 unsigned int VertexBufferElement::getSizeOfType(unsigned int type){
-    if (type == GL_FLOAT){
+    if (type == GL_DOUBLE){
+        return 8;
+    } else if (type == GL_FLOAT){
         return 4;
     } else if (type == GL_UNSIGNED_INT || type == GL_INT){
         return 4;
@@ -41,7 +43,7 @@ void VertexArray::addBuffer(const VertexBuffer& vb, const VertexBufferLayout& la
     bind();
     vb.bind();
     const std::vector<VertexBufferElement>& elements = layout.getElements();
-    unsigned int offset = 0;
+    unsigned long int offset = 0;
     for (unsigned int i = 0; i < elements.size(); i++){
         const VertexBufferElement& element = elements[i];
         glEnableVertexAttribArray(i);

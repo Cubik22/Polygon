@@ -30,7 +30,7 @@ public:
     void cutMainPolygon(){
         mainPolygon.setSegment(segmentPoints[0], segmentPoints[1]);
         mainPolygon.createNetwork();
-        Network::printNetwork(mainPolygon.getStartNode());
+        //Network::printNetwork(mainPolygon.getStartNode());
         polygonsIndices = mainPolygon.cut();
         std::cout << "fine taglio\n";
     }

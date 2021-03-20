@@ -1,7 +1,7 @@
 #include "Network.h"
 #include <iostream>
 
-Node::Node(unsigned int _index) : next{nullptr}, previous{nullptr}, up{nullptr}, down{nullptr}, index{_index} {}
+Node::Node(unsigned int _index) : touched{false}, next{nullptr}, previous{nullptr}, up{nullptr}, down{nullptr}, index{_index} {}
 
 Node::~Node(){
     if (next){

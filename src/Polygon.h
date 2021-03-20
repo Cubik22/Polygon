@@ -16,12 +16,11 @@ private:
     Vector2f p1;
     Vector2f p2;
     void calculateOrientation();
-    bool isNodeIntersectionDouble(const Node* node);
+    const Node* getNextIntersection(const Node* node);
     void sortIntersectionsNetwork(const std::vector<Node*>& nodes);
     void createSmallPolygon(const Node* node, std::vector<std::vector<unsigned int>*>& polygonsIndices);
     void continueSmallPolygon(const Node* node, const Node* initialNode, RelativePosition relativePosition,
                               std::vector<unsigned int>& indicesPoli, std::vector<std::vector<unsigned int>*>& polygonsIndices);
-    void pushAndGo(std::vector<Vector2f>& positionsPoli, std::list<unsigned int>& indicesPoli, std::list<unsigned int>::const_iterator& it);
 public:
     Polygon();
     ~Polygon();

@@ -3,11 +3,13 @@
 
 #include <iostream>
 
+
 class Vector2f{
+
 public:
     float x;
     float y;
-public:
+
     Vector2f() {}
     Vector2f(float _x, float _y);
     Vector2f(const Vector2f& copy);

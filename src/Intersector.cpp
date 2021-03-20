@@ -11,7 +11,7 @@ void Intersector::calculateLines(){
 }
 
 Intersector::Intersector() : intersectionCalculated{false}, relativePositionCalculated{false},
-                             toleranceParallelism{1.0E-5}, toleranceOnVertex{1.0E-4}, intersectionPoint{0.0, 0.0} {}
+                             toleranceParallelism{1.0E-7}, toleranceOnVertex{1.0E-7}, intersectionPoint{0.0, 0.0} {}
 
 void Intersector::setSegment1(const Vector2f &_r1, const Vector2f &_r2){
     r1 = _r1;
@@ -119,7 +119,7 @@ std::ostream& operator<<(std::ostream& ostrem, const IntersectionType& type){
     } else if (type == IntersectionType::OutsideSegment){
         ostrem << "Outside segment";
     }
-    return ostrem << "\n";
+    return ostrem;
 }
 
 std::ostream& operator<<(std::ostream& ostrem, const RelativePosition& type){
@@ -130,5 +130,5 @@ std::ostream& operator<<(std::ostream& ostrem, const RelativePosition& type){
     } else if (type == RelativePosition::Negative){
         ostrem << "Negative";
     }
-    return ostrem << "\n";
+    return ostrem;
 }

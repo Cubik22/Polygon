@@ -2,6 +2,7 @@
 #include "GL/glew.h"
 #include <stdlib.h>
 
+
 const unsigned int Shape::DIMENSIONS = 2;
 
 Shape::~Shape() {}

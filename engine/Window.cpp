@@ -1,6 +1,7 @@
 #include "Window.h"
 #include <iostream>
 
+
 void updatePressedClick(bool glPressed, bool& pressed, bool& click){
     if (glPressed){
         if (!pressed){
@@ -22,10 +23,13 @@ void mouseCallback(GLFWwindow* glWindow, double xpos, double ypos){
 }
 
 Window::Window(const char* name, unsigned int width, unsigned int height) :
-    xMouse{0}, yMouse{0}, mouseLeftPressed{false}, mouseLeftClick{false}, WIDTH{width}, HEIGHT{height} {
+    WIDTH{width}, HEIGHT{height}, xMouse{0}, yMouse{0},
+    mouseLeftPressed{false}, mouseLeftClick{false}, enterPressed{false}, enterClick{false}, backPressed{false}, backClick{false} {
+
     /* Create a windowed mode window and its OpenGL context */
     glWindow = glfwCreateWindow(WIDTH, HEIGHT, name, NULL, NULL);
     if (!glWindow){
+        std::cerr << "ERROR: problems while creating the window\n";
         glfwTerminate();
         exit(-1);
     }
@@ -44,23 +48,23 @@ Window::~Window(){
     glfwDestroyWindow(glWindow);
 }
 
-double Window::getXMouse(){
+double Window::getXMouse() const{
     return xMouse;
 }
 
-double Window::getYMouse(){
+double Window::getYMouse() const{
     return yMouse;
 }
 
-bool Window::shouldClose(){
+bool Window::shouldClose() const{
     return glfwWindowShouldClose(glWindow);
 }
 
-void Window::swapBuffer(){
+void Window::swapBuffer() const{
     glfwSwapBuffers(glWindow);
 }
 
-void Window::waitEvents(){
+void Window::waitEvents() const{
     glfwWaitEvents();
 }
 
@@ -71,6 +75,8 @@ void Window::processImput(){
     updatePressedClick(glEnterPressed, enterPressed, enterClick);
     bool glBackPressed = glfwGetKey(glWindow, GLFW_KEY_BACKSPACE) == GLFW_PRESS;
     updatePressedClick(glBackPressed, backPressed, backClick);
+    bool glEscPressed = glfwGetKey(glWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS;
+    updatePressedClick(glEscPressed, escPressed, escClick);
 }
 
 bool Window::isLeftClick() const{
@@ -85,9 +91,14 @@ bool Window::isBackClick() const{
     return backClick;
 }
 
+bool Window::isEscClick() const{
+    return escClick;
+}
+
 void Window::initiGLFW(){
     /* Initialize the library */
     if (!glfwInit()){
+        std::cerr << "ERROR: while initializing GLFW\n";
         exit(-1);
     }
 }

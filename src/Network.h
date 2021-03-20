@@ -18,6 +18,8 @@ class Node{
 public:
     Node(unsigned int _index);
     ~Node();
+
+    mutable bool touched;
     // every node
     Node* next;
     Node* previous;

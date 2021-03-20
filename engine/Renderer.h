@@ -4,16 +4,12 @@
 #include "Shape.h"
 #include <vector>
 
-class Renderer{
-private:
-    std::vector<const Shape*> shapes;
-    std::vector<unsigned int> colors;
 
-    Shader shader;
-    const char* getVertexShader() const;
-    const char* getFragmentShader() const;
+class Renderer{
+
 public:
     Renderer();
+
     void addShape(const Shape* shape);
     void replaceShape(unsigned int position, const Shape* shape);
     void removeLastShape();
@@ -23,6 +19,15 @@ public:
     void setPolygonColorRGB(unsigned int r, unsigned int g, unsigned int b) const;
 
     static void initGLEW();
+    static void setLineWidth(unsigned int width);
+
+private:
+    Shader shader;
+    std::vector<const Shape*> shapes;
+    std::vector<unsigned int> colors;
+
+    const char* getVertexShader() const;
+    const char* getFragmentShader() const;
 };
 
 #endif // RENDERER_H

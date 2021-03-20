@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 # Set Project Name and language used
-project(project1 LANGUAGES CXX)
+project(Polygon LANGUAGES CXX)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)

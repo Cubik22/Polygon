@@ -2,36 +2,20 @@
 #include "GL/glew.h"
 #include <iostream>
 
-const char *Renderer::getVertexShader() const{
-    return  "#version 330 core\n"
-            "layout(location = 0) in vec2 position;\n"
-            "void main(){\n"
-            "   gl_PointSize = 5.0;\n"
-            "   gl_Position = vec4(position, 0, 1);\n"
-            "};";
-}
-const char *Renderer::getFragmentShader() const{
-    return  "#version 330 core\n"
-            "layout(location = 0) out vec4 color;\n"
-            "uniform vec4 u_Color;\n"
-            "void main(){\n"
-            "   color = u_Color;\n"
-            "};";
-}
 
 Renderer::Renderer() : shader(getVertexShader(), getFragmentShader()) {
     colors = {
-        255,   0,   0,    //red
-          0, 255,   0,    //lime
-          0,   0, 255,    //blue
-        255, 255,   0,  //yellow
-          0, 255, 255,  //cyan
-        255, 250, 205,//lemon
-        255,   0, 255,  //magenta
-        139,   0,   0,    //dark red
-          0, 128,   0,     //green
-        138,  43, 226,  //blue violet
-        255,  20, 147   //deep pink
+        255,   0,   0,      //red
+          0, 255,   0,      //lime
+          0,   0, 255,      //blue
+        255, 255,   0,      //yellow
+          0, 255, 255,      //cyan
+        255, 250, 205,      //lemon
+        255,   0, 255,      //magenta
+        139,   0,   0,      //dark red
+          0, 128,   0,      //green
+        138,  43, 226,      //blue violet
+        255,  20, 147       //deep pink
     };
 }
 
@@ -59,7 +43,8 @@ void Renderer::drawShapes() const{
     shader.bind();
     for (unsigned int i = 0; i < shapes.size(); i++){
         const Shape* shape = shapes[i];
-        setPolygonColorRGB(colors[3 * i], colors[3 * i + 1], colors[3 * i + 2]);
+        unsigned int colorsSize = colors.size();
+        setPolygonColorRGB(colors[(3 * i) % colorsSize], colors[(3 * i + 1) % colorsSize], colors[(3 * i + 2) % colorsSize]);
         shape->draw();
     }
 }
@@ -80,7 +65,7 @@ void Renderer::setPolygonColorRGB(unsigned int r, unsigned int g, unsigned int b
 
 void Renderer::initGLEW(){
     if (glewInit() != GLEW_OK){
-        std::cout << "ERRORE di caricamento di Glew\n";
+        std::cerr << "ERROR initializing Glew\n";
     }
     std::cout << "VERSION: " << glGetString(GL_VERSION) << "\n";
 
@@ -92,6 +77,30 @@ void Renderer::initGLEW(){
     std::cout << "VENDOR: " << vendor << "\n";
     std::cout << "MODEL: " << model << std::endl;
 
+    // enable setting gl_PointSize in Vertex Shader
     glEnable(GL_PROGRAM_POINT_SIZE);
+
+    //set the default line width to 3
     glLineWidth(3);
+}
+
+void Renderer::setLineWidth(unsigned int width){
+    glLineWidth(width);
+}
+
+const char *Renderer::getVertexShader() const{
+    return  "#version 330 core\n"
+            "layout(location = 0) in vec2 position;\n"
+            "void main(){\n"
+            "   gl_PointSize = 5.0;\n"
+            "   gl_Position = vec4(position, 0, 1);\n"
+            "};";
+}
+const char *Renderer::getFragmentShader() const{
+    return  "#version 330 core\n"
+            "layout(location = 0) out vec4 color;\n"
+            "uniform vec4 u_Color;\n"
+            "void main(){\n"
+            "   color = u_Color;\n"
+            "};";
 }

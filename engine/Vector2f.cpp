@@ -1,5 +1,6 @@
 #include "Vector2f.h"
 
+
 Vector2f::Vector2f(float _x, float _y) : x{_x}, y{_y} {}
 
 Vector2f::Vector2f(const Vector2f &copy) : x{copy.x}, y{copy.y} {}

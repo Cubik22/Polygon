@@ -3,7 +3,30 @@
 
 #include "GLFW/glfw3.h"
 
+
 class Window{
+
+public:
+    const unsigned int WIDTH;
+    const unsigned int HEIGHT;
+
+    Window(const char* name, unsigned int width, unsigned int height);
+    ~Window();
+
+    double getXMouse() const;
+    double getYMouse() const;
+    bool shouldClose() const;
+    void swapBuffer() const;
+    void waitEvents() const;
+    void processImput();
+    bool isLeftClick() const;
+    bool isEnterClick() const;
+    bool isBackClick() const;
+    bool isEscClick() const;
+
+    static void initiGLFW();
+    static void terminateGLFW();
+
 private:
     GLFWwindow* glWindow;
     double xMouse;
@@ -14,23 +37,8 @@ private:
     bool enterClick;
     bool backPressed;
     bool backClick;
-public:
-    const unsigned int WIDTH;
-    const unsigned int HEIGHT;
-    Window(const char* name, unsigned int width, unsigned int height);
-    ~Window();
-    double getXMouse();
-    double getYMouse();
-    bool shouldClose();
-    void swapBuffer();
-    void waitEvents();
-    void processImput();
-    bool isLeftClick() const;
-    bool isEnterClick() const;
-    bool isBackClick() const;
-
-    static void initiGLFW();
-    static void terminateGLFW();
+    bool escPressed;
+    bool escClick;
 
     friend void updatePressedClick(bool glPressed, bool& pressed, bool& click);
     friend void mouseCallback(GLFWwindow* glWindow, double xpos, double ypos);

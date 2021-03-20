@@ -1,7 +1,8 @@
 #include "IndexBuffer.h"
 #include "GL/glew.h"
 
-IndexBuffer::IndexBuffer(){
+
+IndexBuffer::IndexBuffer() : count{0} {
     glGenBuffers(1, &rendererID);
 }
 
