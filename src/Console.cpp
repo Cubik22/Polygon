@@ -1,5 +1,5 @@
 #include "Console.h"
-#include <filesystem>
+#include <fstream>
 
 Console::Console() : window{nullptr}, renderer{nullptr} {}
 
@@ -231,7 +231,10 @@ void Console::askSaveToFile(){
             repeat = false;
             std::cout << "Enter the name of the file you want to save polygon to: ";
             std::getline(std::cin, fileName);
-            if (std::filesystem::exists(fileName)){
+            std::ifstream tryFile;
+            tryFile.open(fileName);
+            if (!tryFile.fail()){
+                tryFile.close();
                 std::cout << "File already exist, are you sure you want to override it? [y/N] ";
                 std::getline(std::cin, answer);
                 if (answer != "y" && answer != "Y"){

@@ -16,7 +16,9 @@ Polygon::Polygon(const std::vector<Vector2f> &_points, const std::vector<unsigne
 
 Polygon::~Polygon(){
     //std::cout <<"polygon deleted\n";
-    delete startNode;
+    if (startNode){
+        Network::deleteNetwork(startNode);
+    }
 }
 
 void Polygon::setBody(const std::vector<Vector2f> &_points, const std::vector<unsigned int> &_indices){

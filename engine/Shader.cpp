@@ -1,7 +1,7 @@
 #include "Shader.h"
 #include "GL/glew.h"
 #include <stdio.h>
-#include <alloca.h>
+#include <stdlib.h>
 
 unsigned int Shader::create(const char *vertexShader, const char *fragmentShader) const{
     unsigned int program = glCreateProgram();

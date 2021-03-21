@@ -37,6 +37,7 @@ public:
     Network();
 
     static void printNetwork(const Node* start);
+    static void deleteNetwork(Node* start);
 };
 
 #endif // NETWORK_H
