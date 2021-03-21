@@ -78,21 +78,32 @@ void Polygon::printIndices() const{
 void Polygon::createNetwork(){
     // stores the intersection Nodes in order to sort them after
     std::vector<Node*> unorderedIntersectionNodes;
+    // intersector is used to find intersection points
     Intersector inter;
+    // this is the segment, it will be treated as a line when computing intersection
     inter.setSegment1(p1, p2);
     unsigned int numberIndices = getNumberIndices();
     numberIntersections = 0;
 
+    // this vector is used to find the one of the two most external intersection node
+    // precisely the last the segment line intersects
+    // it is useful for helping the sorting  of the intersection nodes after
     Vector2f segment = p2 - p1;
+    // in order to find this node we will compute the dot product with the segment
+    // and one of point of the segment - the intersection node
     double minProduct = Polygon::BIG_DOUBLE;
     Node* minIntersectionNode = nullptr;
 
+    // this stores the first normal node, in order to connect it in the end to the last node (the network is cyclical)
     Node* firstNode = nullptr;
+    // this stores the pointer to the temporary node we are considering
     Node* node = nullptr;
+    // this stores the pointer to the previous node se we can connect it with the new one
     Node* previous = nullptr;
 
     for (unsigned int i = 0; i < numberIndices; i++){
         node = new Node(indices[i]);
+        // previous will be nullptr just the first time
         if (previous != nullptr){
             node->previous = previous;
             previous->next = node;
@@ -100,19 +111,27 @@ void Polygon::createNetwork(){
             //std::cout << "first node setted\n";
             firstNode = node;
         }
+        // here we set previous to node beacuse in the next iteration will be previous
         previous = node;
+        // we calculate the intersection with the segment from the point to the next one
         inter.setSegment2(points[i], points[(i + 1) % numberIndices]);
         IntersectionType intersectionType = inter.calculateIntersection(true, false);
         if (intersectionType == IntersectionType::InsideSegment){
             const Vector2f intersectionPoint = inter.getIntersectionPoint();
+            // we add the new point found to the points of the polygon
             points.push_back(intersectionPoint);
+            // index of last point before intersection was numberIndices - 1 so the first intersection node starts from numberIndices
             node = new Node(numberIndices + numberIntersections);
+            // we add the new node found to the list of unordered intersection nodes
             unorderedIntersectionNodes.push_back(node);
             numberIntersections++;
+            // again we connect it with the previous node because intersection nodes are connected both like the normal nodes to previous and after
+            // but are also connected between them with up and down
             node->previous = previous;
             previous->next = node;
             previous = node;
 
+            // here is calculated the dot product in order to find the most outer intersection node
             double product = segment.dot(points[node->getIndex()] - p1);
             if (product < minProduct){
                 minIntersectionNode = node;
@@ -125,9 +144,11 @@ void Polygon::createNetwork(){
         std::cerr << "ERROR: first node is nullptr\n";
         exit(-1);
     }
+    // finally we connect the first node with the last one and the cycle is closed
     firstNode->previous = previous;
     previous->next = firstNode;
 
+    // here we handle the case where there are no intersections
     if (minIntersectionNode != nullptr){
         startNode = minIntersectionNode;
         sortIntersectionsNetwork(unorderedIntersectionNodes);
@@ -231,14 +252,19 @@ void Polygon::sortIntersectionsNetwork(const std::vector<Node*>& nodes){
 
 void Polygon::continueSmallPolygon(const Node* node, const Node* initialNode, RelativePosition relativePosition,
                                    std::vector<unsigned int>& indicesPoli, std::vector<std::vector<unsigned int>*>& polygonsIndices){
+    // first we add the node we currently are at to the list of indices of the small polygon
     indicesPoli.push_back(node->getIndex());
     node = node->next;
+    // here we compute the intersection with the two points in order to find if we are arrived at an intersection point
     Intersector inter;
     inter.setSegment1(p1, points[node->getIndex()]);
     inter.setSegment2(p2, points[node->getIndex()]);
+    // this check is used when the small polygon is just created and the relative position is parallel
+    // becuse we are starting from an intersection point, if we not change it we will never enter in the while loop
     if (relativePosition == RelativePosition::Parallel){
         relativePosition = inter.calculateRelativePosition();
     }
+    // we loop until we arrive at an intersection point, so when the relative position becomes parallel
     while (inter.calculateRelativePosition() == relativePosition) {
         indicesPoli.push_back(node->getIndex());
         node = node->next;
@@ -246,9 +272,11 @@ void Polygon::continueSmallPolygon(const Node* node, const Node* initialNode, Re
         inter.setSegment2(p2, points[node->getIndex()]);
     }
     std::cout << node->getIndex() << " arrived\n";
+    // if the node we are arrived at is the starting node, we are finished, the small polygon is closed
     if (node != initialNode){
         indicesPoli.push_back(node->getIndex());
     } else{
+        // theoretically it will never happen that we close the small polygon here, but I'm not sure :)
         std::cout << node->getIndex() << " closing polygon other way\n";
     }
     if (!node->touched){
@@ -256,16 +284,22 @@ void Polygon::continueSmallPolygon(const Node* node, const Node* initialNode, Re
         node->touched = true;
         const Node* nodeCreation = node;
         node = getNextIntersection(node);
+        // theoretically here is where we will close the polygon
         if (node == initialNode){
             std::cout << node->getIndex() << " closing polygon\n";
         }
+        // sometimes getNextIntersection returns a nullptr, this happens very rarely when there are a lot of points and intersections
+        // and intersector thinks that certain lines are parallel when in reality are not
         if (node != nullptr && node != initialNode){
             node->touched = true;
             std::cout << node->getIndex() << " continue samll polygon\n";
+            // first we continue the small polygon we are creating
             continueSmallPolygon(node, initialNode, relativePosition, indicesPoli, polygonsIndices);
         }
+        // here we create a new small polygon
         std::cout << nodeCreation->getIndex() << " create samll polygon\n";
         polygonsIndices.push_back(new std::vector<unsigned int>);
+        // we add a new array to the big array of arrays
         std::vector<unsigned int>& indicesPoliCreation = *polygonsIndices[polygonsIndices.size() - 1];
         continueSmallPolygon(nodeCreation, nodeCreation, RelativePosition::Parallel, indicesPoliCreation, polygonsIndices);
     } else{
