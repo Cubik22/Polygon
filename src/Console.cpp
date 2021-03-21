@@ -1,15 +1,11 @@
 #include "Console.h"
 #include <filesystem>
 
-Console::Console() {}
+Console::Console() : window{nullptr}, renderer{nullptr} {}
 
 Console::~Console() {
-    if (renderer){
-        delete renderer;
-    }
-    if (window){
-        delete window;
-    }
+    // already terminated before
+    //terminate();
 }
 
 void Console::start(){
@@ -24,6 +20,16 @@ void Console::start(){
     }
     drawCuttedPolygon();
     askSaveToFile();
+}
+
+void Console::terminate(){
+    if (renderer != nullptr){
+        delete renderer;
+    }
+    if (window != nullptr){
+        delete window;
+    }
+    Window::terminateGLFW();
 }
 
 void Console::drawFillingDoubleBuffers(){
@@ -108,7 +114,7 @@ void Console::drawPolygon(){
     bool end = false;
     while (!end){
         if (window->shouldClose()){
-            Window::terminateGLFW();
+            terminate();
             exit(-1);
         }
         renderer->clear();
@@ -149,7 +155,7 @@ void Console::drawSegment(){
     bool end = false;
     while (!end){
         if (window->shouldClose()){
-            Window::terminateGLFW();
+            terminate();
             exit(-1);
         }
         renderer->clear();
@@ -178,7 +184,7 @@ void Console::drawSegment(){
 
         window->swapBuffer();
         window->waitEvents();
-}
+    }
 }
 
 void Console::drawCuttedPolygon(){
@@ -208,10 +214,9 @@ void Console::drawCuttedPolygon(){
         }
         window->waitEvents();
     }
-
-    Window::terminateGLFW();
-
     std::cout << std::endl;
+
+    terminate();
 }
 
 void Console::askSaveToFile(){

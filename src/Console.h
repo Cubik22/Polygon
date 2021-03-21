@@ -22,6 +22,7 @@ private:
     Renderer* renderer;
     Application app;
 
+    void terminate();
     void drawFillingDoubleBuffers();
     void askLoadFromFile();
     void initWindowAndLibraries();

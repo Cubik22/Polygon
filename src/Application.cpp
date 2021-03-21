@@ -3,7 +3,6 @@
 #include <fstream>
 #include <sstream>
 
-
 Application::Application() : verticesIndicesLoaded{false}, segmentLoaded{false} {}
 
 const std::vector<unsigned int> Application::getIndices() const{
