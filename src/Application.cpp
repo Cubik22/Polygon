@@ -4,7 +4,7 @@
 #include <sstream>
 
 
-Application::Application() {}
+Application::Application() : verticesIndicesLoaded{false}, segmentLoaded{false} {}
 
 const std::vector<unsigned int> Application::getIndices() const{
     return indices;
@@ -66,6 +66,7 @@ bool Application::closePolygon(){
     }
     indices.push_back(vertices.size() - 1);
     indices.push_back(0);
+    verticesIndicesLoaded = true;
     return true;
 }
 
@@ -93,6 +94,10 @@ unsigned int Application::getSegmentSize() const{
     return segmentPoints.size();
 }
 
+void Application::createSegment(){
+    segmentLoaded = true;
+}
+
 const Polygon& Application::getPolygon() const{
     return mainPolygon;
 }
@@ -118,6 +123,14 @@ const std::vector<std::vector<unsigned int>*>& Application::getPolygonsIndices()
     return polygonsIndices;
 }
 
+bool Application::isVerticesIndicesLoaded() const{
+    return verticesIndicesLoaded;
+}
+
+bool Application::isSegmentLoaded() const{
+    return segmentLoaded;
+}
+
 void Application::printVertices() const{
     std::cout << "Printing application vertices\n";
     for (unsigned int i = 0; i < vertices.size(); i++){
@@ -132,41 +145,18 @@ void Application::printIndices() const{
     }
 }
 
-bool Application::loadVerticesFromFile(const std::string& fileName){
-    std::cout << "Loading vertices from " << fileName << "\n";
-    unsigned int numberVertices;
-    std::ifstream file;
-    std::string line;
-    std::stringstream convert;
-    file.open(fileName);
-    if (file.fail()){
-        std::cerr << "ERROR: failed to open file " << fileName << "\n";
-        return false;
-    }
-    getline(file, line);
-    convert.str(line);
-    convert >> numberVertices;
-    vertices.reserve(numberVertices);
-    indices.reserve(2 * numberVertices);
-    for (unsigned int i = 0; i < numberVertices; i++){
-        float x, y;
-        getline(file, line);
-        convert.clear();
-        convert.str(line);
-        convert >> x;
-        convert >> y;
-        //std::cout << "x: " << x << " y: " << y << "\n";
-        vertices.emplace_back(x, y);
-        indices.push_back(i % numberVertices);
-        indices.push_back((i + 1) % numberVertices);
-    }
-    file.close();
-    std::cout << "Vertices correctly loaded\n";
-    return true;
+void Application::clear(){
+    vertices.clear();
+    indices.clear();
+    mainPolygon = Polygon();
+    polygonsIndices.clear();
+    verticesIndicesLoaded = false;
+    segmentLoaded = false;
+    std::cout << "Application cleared\n";
 }
 
-void Application::saveVerticesToFile(const std::string& fileName) const{
-    std::cout << "Saving vertices to " << fileName << "\n";
+void Application::savePolygonToFile(const std::string& fileName) const{
+    std::cout << "Saving polygon to " << fileName << "\n";
     unsigned int numberVertices = getNumberVertices();
     std::ofstream file;
     file.open(fileName);
@@ -174,10 +164,170 @@ void Application::saveVerticesToFile(const std::string& fileName) const{
         std::cerr << "ERROR: failed to open file " << fileName << "\n";
         return;
     }
+    file << "# segment\n";
+    file << segmentPoints[0].x << " " << segmentPoints[1].y << "\n";
+    file << segmentPoints[1].x << " " << segmentPoints[1].y << "\n";
+    file << "# number of vertices\n";
     file << numberVertices << "\n";
+    file << "# indices\n";
+    for (unsigned int i = 0; i < numberVertices - 1; i++){
+        file << indices[2 * i] << " ";
+    }
+    file << indices[2 * (numberVertices - 1)] << "\n";
+    file << "# vertices\n";
     for (unsigned int i = 0; i < numberVertices; i++){
         file << vertices[i].x << " " << vertices[i].y << "\n";
     }
     file.close();
-    std::cout << "Vertices correctly saved\n";
+    std::cout << "Polygon correctly saved\n";
+}
+
+int Application::searchInFile(const std::string& fileName, const std::string& search, bool drawError){
+    std::ifstream file;
+    int found = openFileAndSearch(file, fileName, search, drawError);
+    file.close();
+    return found;
+}
+
+int Application::getNumberVerticesFromFile(const std::string& fileName){
+    std::ifstream file;
+    int found = openFileAndSearch(file, fileName, "number of vertices");
+    if (found != 1){
+        return found;
+    }
+    std::string line;
+    std::stringstream convert;
+    int numberVertices = 0;
+    getline(file, line);
+    convert.str(line);
+    convert >> numberVertices;
+    file.close();
+    if (numberVertices <= 0 || convert.fail()){
+        std::cout << "ERROR: number of vertices should be a number greather than 0\n";
+        return -2;
+    }
+    return numberVertices;
+}
+
+int Application::loadSegmentFromFile(const std::string& fileName){
+    std::ifstream file;
+    int found = openFileAndSearch(file, fileName, "segment");
+    if (found != 1){
+        return found;
+    }
+    std::string line;
+    std::stringstream convert;
+    for (unsigned int i = 0; i < 2; i++){
+        getline(file, line);
+        float x, y;
+        convert.str(line);
+        convert >> x >> y;
+        if (convert.fail()){
+            std::cerr << "ERROR: problems when reading segment\n";
+            std::cerr << "Line: " << line << "\n";
+            segmentPoints.clear();
+            return -3;
+        }
+        convert.clear();
+        segmentPoints.emplace_back(x, y);
+    }
+    file.close();
+    std::cout << "Correctly loaded segment from " << fileName << "\n";
+    segmentLoaded = true;
+    return 1;
+}
+
+int Application::loadVerticesFromFile(const std::string& fileName, unsigned int numberVertices, bool loadIndices){
+    if (numberVertices == 0){
+        std::cerr << "ERROR: number of vertices should be a number greather than 0\n";
+        return -2;
+    }
+    std::ifstream file;
+    openFileAndSearch(file, fileName, "vertices");
+    std::string line;
+    std::stringstream convert;
+    vertices.reserve(numberVertices);
+    indices.reserve(2 * numberVertices);
+    for (unsigned int i = 0; i < numberVertices; i++){
+        getline(file, line);
+        float x, y;
+        convert.str(line);
+        convert >> x >> y;
+        if (convert.fail()){
+            std::cerr << "ERROR: problems when reading vertices\n";
+            std::cerr << "Line: " << line << "\n";
+            vertices.clear();
+            indices.clear();
+            return -3;
+        }
+        vertices.emplace_back(x, y);
+        convert.clear();
+        if (!loadIndices){
+            indices.push_back(i % numberVertices);
+            indices.push_back((i + 1) % numberVertices);
+        }
+    }
+    file.close();
+    std::cout << "Correctly loaded vertices from " << fileName << "\n";
+
+    if (!loadIndices){
+        verticesIndicesLoaded = true;
+        return 1;
+    }
+    openFileAndSearch(file, fileName, "indices");
+    getline(file, line);
+    unsigned int index;
+    unsigned int previousIndex;
+    unsigned int firstIndex;
+    convert.str(line);
+    convert >> previousIndex;
+    if (convert.fail()){
+        std::cerr << "ERROR: problems when reading indices\n";
+        std::cerr << "Line: " << line << "\n";
+        vertices.clear();
+        return -3;
+    }
+    firstIndex = previousIndex;
+    for (unsigned int i = 0; i < numberVertices - 1; i++){
+        convert >> index;
+        if (convert.fail()){
+            std::cerr << "ERROR: problems when reading indices\n";
+            std::cerr << "Line: " << line << "\n";
+            vertices.clear();
+            indices.clear();
+            return -3;
+        }
+        indices.push_back(previousIndex);
+        indices.push_back(index);
+        previousIndex = index;
+    }
+    indices.push_back(index);
+    indices.push_back(firstIndex);
+    file.close();
+    std::cout << "Correctly loaded indices from " << fileName << "\n";
+    verticesIndicesLoaded = true;
+    return 1;
+}
+
+int Application::openFileAndSearch(std::ifstream& file, const std::string fileName, const std::string& search, bool drawError){
+    file.open(fileName);
+    if (file.fail()){
+        if (drawError){
+            std::cerr << "ERROR: failed to open file " << fileName << "\n";
+        }
+        return 0;
+    }
+    std::string searchLine = "# " + search;
+    std::string line;
+    getline(file, line);
+    while (line != searchLine){
+        getline(file, line);
+        if (file.eof()){
+            if (drawError){
+                std::cerr << "ERROR: failed to load " << search << "\n";
+            }
+            return -1;
+        }
+    }
+    return 1;
 }
