@@ -17,6 +17,12 @@ LOG::~LOG(){
     opened = false;
 }
 
+void LOG::NewLine(LogLevel level){
+    if (level >= LOG::LEVEL){
+        std::cout << std::endl;
+    }
+}
+
 LogLevel LOG::LEVEL = LogLevel::DEBUG;
 
 std::string LOG::getLabel(LogLevel level){

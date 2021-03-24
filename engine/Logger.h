@@ -3,6 +3,12 @@
 
 #include <iostream>
 
+#define RESET   "\033[0m"
+#define BLUE    "\033[34m"
+#define GREEN   "\033[32m"
+#define YELLOW  "\033[33m"
+#define RED     "\033[31m"
+
 
 enum class LogLevel{
     DEBUG = 0,
@@ -19,18 +25,24 @@ public:
 
     template<typename T>
     LOG& operator<<(const T& message){
-        if (logLevel >= LEVEL){
+        if (logLevel >= LOG::LEVEL){
             opened = true;
-            if (logLevel < LogLevel::WARN){
-                std::cout << message;
+            if (logLevel == LogLevel::DEBUG){
+                std::cout << BLUE << message << RESET;
+            } else if (logLevel == LogLevel::INFO){
+                std::cout << GREEN << message << RESET;
+            } else if (logLevel == LogLevel::WARN){
+                std::cerr << YELLOW << message << RESET;
             } else{
-                std::cerr << message;
+                std::cerr << RED << message << RESET;
             }
         }
         return *this;
     }
 
     static LogLevel LEVEL;
+
+    static void NewLine(LogLevel level = LogLevel::ERROR);
 
 private:
     bool opened;

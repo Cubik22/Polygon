@@ -154,7 +154,7 @@ void Polygon::createNetwork(){
         sortIntersectionsNetwork(unorderedIntersectionNodes);
 
         calculateOrientation();
-        std::cout << std::endl;
+        LOG::NewLine(LogLevel::INFO);
 
     } else if (numberIntersections == 0){
         LOG(LogLevel::INFO) << "No intersections";

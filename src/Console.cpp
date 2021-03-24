@@ -97,7 +97,7 @@ void Console::askLoadFromFile(){
             }
         }
     }
-    std::cout << std::endl;
+    LOG::NewLine();
 }
 
 void Console::initWindowAndLibraries(){
@@ -110,7 +110,7 @@ void Console::initWindowAndLibraries(){
     renderer = new Renderer();
     renderer->setPolygonColorFloat(WHITE);
 
-    std::cout << std::endl;
+    LOG::NewLine(LogLevel::INFO);
 }
 
 void Console::drawPolygon(){
@@ -196,7 +196,7 @@ void Console::drawCuttedPolygon(){
     app.cutMainPolygon();
     const std::vector<std::vector<unsigned int>*>& polygonsIndices = app.getPolygonsIndices();
 
-    std::cout << std::endl;
+    LOG::NewLine(LogLevel::INFO);
     LOG(LogLevel::INFO) << "Number of polygons: " << polygonsIndices.size();
     for (unsigned int i = 0; i < polygonsIndices.size(); i++){
         const std::vector<unsigned int>& indices = *polygonsIndices[i];
@@ -206,7 +206,7 @@ void Console::drawCuttedPolygon(){
                 log << indices[n] << " ";
             }
         }
-        //std::cout <<  "\n";
+
         Shape* shapeNuova = new LinesPointIndices(app.getPolygon().getPoints(), indices);
         renderer->addShape(shapeNuova);
     }
@@ -220,7 +220,7 @@ void Console::drawCuttedPolygon(){
         }
         window->waitEvents();
     }
-    std::cout << std::endl;
+    LOG::NewLine(LogLevel::INFO);
 
     terminate();
 }
