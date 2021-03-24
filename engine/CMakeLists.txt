@@ -14,6 +14,7 @@ add_library(
     VertexArray.cpp
     Shader.cpp
     Shape.cpp
+    Logger.cpp
     Renderer.cpp
     Window.cpp
     Vector2f.h
@@ -22,6 +23,7 @@ add_library(
     VertexArray.h
     Shader.h
     Shape.h
+    Logger.h
     Renderer.h
     Window.h
 )

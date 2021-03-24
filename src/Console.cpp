@@ -1,4 +1,5 @@
 #include "Console.h"
+#include "Logger.h"
 #include <fstream>
 
 Console::Console() : window{nullptr}, renderer{nullptr} {}
@@ -61,10 +62,11 @@ void Console::askLoadFromFile(){
                 continueLoop = true;
                 continue;
             } else{
-                std::cout << "Vertices found\n";
+                LOG(LogLevel::INFO) << "Vertices found";
             }
             if (app.searchInFile(fileName, "indices", false) > 0){
-                std::cout << "Indices found, do you want to load them? (If not it is assumed that vertices are in order) [Y/n] ";
+                LOG(LogLevel::INFO) << "Indices found";
+                std::cout << "Do you want to load indices? (If not it is assumed that vertices are in order) [Y/n] ";
                 std::getline(std::cin, consoleString);
                 if (consoleString == "n" || consoleString == "N"){
                     if (app.loadVerticesFromFile(fileName, numberVertices, false) < 0){
@@ -84,11 +86,12 @@ void Console::askLoadFromFile(){
                 }
             }
             if (app.searchInFile(fileName, "segment", false) > 0){
-                std::cout << "Segment found, do you want to load it? [y/N] ";
+                LOG(LogLevel::INFO) << "Segment found";
+                std::cout << "Do you want to load it? [y/N] ";
                 std::getline(std::cin, consoleString);
                 if (consoleString == "y" || consoleString == "Y"){
                     if (app.loadSegmentFromFile(fileName) < 0){
-                        std::cout << "Segment not loaded\n";
+                        LOG(LogLevel::WARN) << "Segment not loaded";
                     }
                 }
             }
@@ -135,7 +138,7 @@ void Console::drawPolygon(){
             if (app.closePolygon()){
                 end = true;
             } else{
-                std::cout << "Cannot close polygon\n";
+                LOG(LogLevel::WARN) << "Cannot close polygon";
             }
         }
 
@@ -194,13 +197,16 @@ void Console::drawCuttedPolygon(){
     const std::vector<std::vector<unsigned int>*>& polygonsIndices = app.getPolygonsIndices();
 
     std::cout << std::endl;
-    std::cout << "Number of polygons: " << polygonsIndices.size() << "\n";
+    LOG(LogLevel::INFO) << "Number of polygons: " << polygonsIndices.size();
     for (unsigned int i = 0; i < polygonsIndices.size(); i++){
         const std::vector<unsigned int>& indices = *polygonsIndices[i];
-        for (unsigned int n = 0; n < indices.size(); n++){
-            std::cout << indices[n] << " ";
+        {
+            LOG log = LOG(LogLevel::INFO);
+            for (unsigned int n = 0; n < indices.size(); n++){
+                log << indices[n] << " ";
+            }
         }
-        std::cout <<  "\n";
+        //std::cout <<  "\n";
         Shape* shapeNuova = new LinesPointIndices(app.getPolygon().getPoints(), indices);
         renderer->addShape(shapeNuova);
     }

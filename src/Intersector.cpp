@@ -1,6 +1,6 @@
 #include "Intersector.h"
 #include "math.h"
-
+#include "Logger.h"
 
 Intersector::Intersector() : intersectionCalculated{false}, relativePositionCalculated{false},
                              toleranceParallelism{1.0E-7}, toleranceOnVertex{1.0E-7}, intersectionPoint{0.0, 0.0} {}
@@ -23,7 +23,7 @@ void Intersector::setToleranceParallelism(double tolerance){
     if (tolerance > 0){
         toleranceParallelism = tolerance;
     } else{
-        std::cout << "Tolerance Parallelism not set: tolerance cannot be negative\n";
+        LOG(LogLevel::WARN) << "Tolerance Parallelism not set: tolerance cannot be negative";
     }
 }
 
@@ -31,7 +31,7 @@ void Intersector::setToleranceOnVertex(float tolerance){
     if (tolerance > 0){
         toleranceOnVertex = tolerance;
     } else{
-        std::cout << "Tolerance On Vertex not set: tolerance cannot be negative\n";
+        LOG(LogLevel::WARN) << "Tolerance On Vertex not set: tolerance cannot be negative";
     }
 }
 

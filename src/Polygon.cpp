@@ -1,7 +1,7 @@
 #include "Polygon.h"
+#include "Logger.h"
 #include <iostream>
 #include <exception>
-
 
 const double Polygon::BIG_DOUBLE = 1.0E+10;
 
@@ -15,7 +15,7 @@ Polygon::Polygon(const std::vector<Vector2f> &_points, const std::vector<unsigne
 }
 
 Polygon::~Polygon(){
-    //std::cout <<"polygon deleted\n";
+    LOG(LogLevel::DEBUG) << "polygon deleted";
     if (startNode){
         Network::deleteNetwork(startNode);
     }
@@ -62,16 +62,16 @@ unsigned int Polygon::getNumberIntersections() const{
 }
 
 void Polygon::printVertices() const{
-    std::cout << "Printing polygon vertices\n";
+    LOG(LogLevel::INFO) << "Printing polygon vertices";
     for (unsigned int i = 0; i < points.size(); i++){
-        std::cout << i << " x: " << points[i].x << " y: " << points[i].y << "\n";
+        LOG(LogLevel::INFO) << i << " x: " << points[i].x << " y: " << points[i].y;
     }
 }
 
 void Polygon::printIndices() const{
-    std::cout << "Printing polygon indices\n";
+    LOG(LogLevel::INFO) << "Printing polygon indices";
     for (unsigned int i = 0; i < indices.size(); i++){
-        std::cout << i << " " << indices[i] << "\n";
+        LOG(LogLevel::INFO) << i << " " << indices[i];
     }
 }
 
@@ -141,7 +141,7 @@ void Polygon::createNetwork(){
     }
     //std::cout << "end loop\n";
     if (firstNode == nullptr){
-        std::cerr << "ERROR: first node is nullptr\n";
+        LOG(LogLevel::ERROR) << "first node is nullptr";
         exit(-1);
     }
     // finally we connect the first node with the last one and the cycle is closed
@@ -157,10 +157,10 @@ void Polygon::createNetwork(){
         std::cout << std::endl;
 
     } else if (numberIntersections == 0){
-        std::cout << "No intersections\n";
+        LOG(LogLevel::INFO) << "No intersections";
         startNode = firstNode;
     } else{
-        std::cerr << "ERROR: problems when setting startNode\n";
+        LOG(LogLevel::ERROR) << "problems when setting startNode";
         startNode = firstNode;
     }
 }
@@ -169,7 +169,7 @@ std::vector<std::vector<unsigned int>*> Polygon::cut(){
     std::vector<std::vector<unsigned int>*> polygonsIndices;
     if (numberIntersections > 0){
         startNode->touched = true;
-        std::cout << startNode->getIndex() << " starting the cut\n";
+        LOG(LogLevel::INFO) << startNode->getIndex() << " starting the cut";
         polygonsIndices.push_back(new std::vector<unsigned int>);
         std::vector<unsigned int>& indicesPoliCreation = *polygonsIndices[0];
         continueSmallPolygon(startNode, startNode, RelativePosition::Parallel, indicesPoliCreation, polygonsIndices);
@@ -189,13 +189,13 @@ void Polygon::calculateOrientation(){
     if (relativePosition == RelativePosition::Parallel){
         throw std::runtime_error("Error when calculating orientation");
     }
-    std::cout << "orientation: " << relativePosition << "\n";
+    LOG(LogLevel::INFO) << "orientation: " << relativePosition;
     orientation = relativePosition;
 }
 
 const Node* Polygon::getNextIntersection(const Node *node){
     if (node->up == nullptr && node->down == nullptr){
-        std::cout << node->getIndex() << "ERROR: returned nullptr from Polygon::getNextIntersection\n";
+        LOG(LogLevel::WARN) << node->getIndex() << "returned nullptr from Polygon::getNextIntersection";
         return nullptr;
     }
     if (node->up == nullptr){
@@ -208,10 +208,10 @@ const Node* Polygon::getNextIntersection(const Node *node){
     inter.setSegment1(points[node->previous->getIndex()], points[node->up->getIndex()]);
     inter.setSegment2(points[node->next->getIndex()], points[node->up->getIndex()]);
     if (inter.calculateRelativePosition() == orientation){
-        std::cout << node->getIndex() << " same orientation\n";
+        LOG(LogLevel::INFO) << node->getIndex() << " same orientation";
         return node->up;
     } else{
-        std::cout << node->getIndex() << " opposite orientation\n";
+        LOG(LogLevel::INFO) << node->getIndex() << " opposite orientation";
         return node->down;
     }
 }
@@ -223,7 +223,7 @@ void Polygon::sortIntersectionsNetwork(const std::vector<Node*>& nodes){
     }
 
     if (startNode == nullptr){
-        std::cerr << "ERROR: start node is nullptr\n";
+        LOG(LogLevel::ERROR) << "start node is nullptr";
         exit(-1);
     }
     startNode->down = startNode;
@@ -232,7 +232,7 @@ void Polygon::sortIntersectionsNetwork(const std::vector<Node*>& nodes){
 
     Vector2f segment = p2 - p1;
     for (unsigned int i = 1; i < nodesLenght; i++){
-        //std::cout << "node: " << minNode->getIndex() << "\n";
+        LOG(LogLevel::DEBUG) << "node: " << minNode->getIndex();
         double minProduct = Polygon::BIG_DOUBLE;
         for (unsigned int n = 0; n < nodesLenght; n++){
             if (nodes[n]->down == nullptr){
@@ -271,39 +271,39 @@ void Polygon::continueSmallPolygon(const Node* node, const Node* initialNode, Re
         inter.setSegment1(p1, points[node->getIndex()]);
         inter.setSegment2(p2, points[node->getIndex()]);
     }
-    std::cout << node->getIndex() << " arrived\n";
+    LOG(LogLevel::INFO) << node->getIndex() << " arrived";
     // if the node we are arrived at is the starting node, we are finished, the small polygon is closed
     if (node != initialNode){
         indicesPoli.push_back(node->getIndex());
     } else{
         // theoretically it will never happen that we close the small polygon here, but I'm not sure :)
-        std::cout << node->getIndex() << " closing polygon other way\n";
+        LOG(LogLevel::WARN) << node->getIndex() << " closing polygon other way";
     }
     if (!node->touched){
-        std::cout << node->getIndex() << " is not already touched\n";
+        LOG(LogLevel::INFO) << node->getIndex() << " is not already touched";
         node->touched = true;
         const Node* nodeCreation = node;
         node = getNextIntersection(node);
         // theoretically here is where we will close the polygon
         if (node == initialNode){
-            std::cout << node->getIndex() << " closing polygon\n";
+            LOG(LogLevel::INFO) << node->getIndex() << " closing polygon";
         }
         // sometimes getNextIntersection returns a nullptr, this happens very rarely when there are a lot of points and intersections
         // and intersector thinks that certain lines are parallel when in reality are not
         if (node != nullptr && node != initialNode){
             node->touched = true;
-            std::cout << node->getIndex() << " continue samll polygon\n";
+            LOG(LogLevel::INFO) << node->getIndex() << " continue samll polygon";
             // first we continue the small polygon we are creating
             continueSmallPolygon(node, initialNode, relativePosition, indicesPoli, polygonsIndices);
         }
         // here we create a new small polygon
-        std::cout << nodeCreation->getIndex() << " create samll polygon\n";
+        LOG(LogLevel::INFO) << nodeCreation->getIndex() << " create samll polygon";
         polygonsIndices.push_back(new std::vector<unsigned int>);
         // we add a new array to the big array of arrays
         std::vector<unsigned int>& indicesPoliCreation = *polygonsIndices[polygonsIndices.size() - 1];
         continueSmallPolygon(nodeCreation, nodeCreation, RelativePosition::Parallel, indicesPoliCreation, polygonsIndices);
     } else{
-        std::cout << node->getIndex() << " is already touched\n";
+        LOG(LogLevel::INFO) << node->getIndex() << " is already touched";
     }
 }
 

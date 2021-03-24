@@ -1,5 +1,6 @@
 #include "Shader.h"
 #include "GL/glew.h"
+#include "Logger.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -39,12 +40,13 @@ unsigned int Shader::compile(unsigned int type, const char *source) const{
         glGetShaderiv(id, GL_INFO_LOG_LENGTH, &lenght);
         char *message = (char *)alloca(lenght * sizeof(char));
         glGetShaderInfoLog(id, lenght, &lenght, message);
-        printf("ERROR: problems during compilation of %s\n", nameShader);
-        printf("%s\n", message);
+        //LoggerStatic::Error((const std::string&)"problems during compilation of " + (const char*)nameShader + "\n" + message);
+        LOG(LogLevel::ERROR) << "problems during compilation of " << nameShader << "\n" << message;
         glDeleteShader(id);
         return 0;
     } else {
-        printf("%s compiled correctly\n", nameShader);
+        //LoggerStatic::Message(nameShader + (const std::string&)" compiled correctly");
+        LOG(LogLevel::INFO) << nameShader << "compiled correctly";
     }
     return id;
 }
@@ -68,7 +70,8 @@ void Shader::unbind() const {
 int Shader::getUniformLocation(const char *name) const{
     int location = glGetUniformLocation(rendererID, name);
     if (location == -1){
-        printf("ATTENTION: uniform %s doesn't exist\n", name);
+        //LoggerStatic::Warning((const std::string&)"uniform " + name + (const std::string&)" doesn't exist");
+        LOG(LogLevel::WARN) << "uniform " << name << " doesn't exist";
     }
     return location;
 }

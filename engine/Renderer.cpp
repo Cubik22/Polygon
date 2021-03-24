@@ -1,7 +1,7 @@
 #include "Renderer.h"
 #include "GL/glew.h"
+#include "Logger.h"
 #include <iostream>
-
 
 Renderer::Renderer() : shader(getVertexShader(), getFragmentShader()) {
     colors = {
@@ -65,19 +65,25 @@ void Renderer::setPolygonColorRGB(unsigned int r, unsigned int g, unsigned int b
 
 void Renderer::initGLEW(){
     if (glewInit() != GLEW_OK){
-        std::cerr << "ERROR initializing Glew\n";
+        //LoggerStatic::Error("problems while initializing Glew");
+        LOG(LogLevel::ERROR) << "problems while initializing Glew";
     } else{
-        std::cout << "Glew correctly initialized\n";
+        //LoggerStatic::Message("Glew initialized correctly");
+        LOG(LogLevel::INFO) << "Glew initialized correctly";
     }
-    std::cout << "VERSION: " << glGetString(GL_VERSION) << "\n";
+
+    //LoggerStatic::Message((const std::string&)"VERSION: " + (const char*)glGetString(GL_VERSION));
+    LOG(LogLevel::INFO) << "VERSION: " << glGetString(GL_VERSION);
 
     // Returns the vendor
-    auto vendor = glGetString(GL_VENDOR);
+    auto vendor = (const char*)glGetString(GL_VENDOR);
     // Returns a hint to the model
-    auto model = glGetString(GL_RENDERER);
+    auto model = (const char*)glGetString(GL_RENDERER);
 
-    std::cout << "VENDOR: " << vendor << "\n";
-    std::cout << "MODEL: " << model << std::endl;
+    //LoggerStatic::Message((const std::string&)"VENDOR: " + vendor);
+    LOG(LogLevel::INFO) << "VENDOR: " << vendor;
+    //LoggerStatic::Message((const std::string&)"MODEL: " + model);
+    LOG(LogLevel::INFO) << "MODEL: " << model;
 
     // enable setting gl_PointSize in Vertex Shader
     glEnable(GL_PROGRAM_POINT_SIZE);

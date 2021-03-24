@@ -1,5 +1,6 @@
 #include "Application.h"
 #include "Intersector.h"
+#include "Logger.h"
 #include <fstream>
 #include <sstream>
 
@@ -115,7 +116,7 @@ void Application::cutMainPolygon(){
     mainPolygon.createNetwork();
     //Network::printNetwork(mainPolygon.getStartNode());
     polygonsIndices = mainPolygon.cut();
-    std::cout << "End of cutting\n";
+    LOG(LogLevel::INFO) << "End of cutting";
 }
 
 const std::vector<std::vector<unsigned int>*>& Application::getPolygonsIndices() const{
@@ -131,16 +132,16 @@ bool Application::isSegmentLoaded() const{
 }
 
 void Application::printVertices() const{
-    std::cout << "Printing application vertices\n";
+    LOG(LogLevel::INFO) << "Printing application vertices";
     for (unsigned int i = 0; i < vertices.size(); i++){
-        std::cout << i << " x: " << vertices[i].x << " y: " << vertices[i].y << "\n";
+        LOG(LogLevel::INFO) << i << " x: " << vertices[i].x << " y: " << vertices[i].y;
     }
 }
 
 void Application::printIndices() const{
-    std::cout << "Printing application indices\n";
+    LOG(LogLevel::INFO) << "Printing application indices";
     for (unsigned int i = 0; i < indices.size(); i++){
-        std::cout << i << " " << indices[i] << "\n";
+        LOG(LogLevel::INFO) << i << " " << indices[i];
     }
 }
 
@@ -151,16 +152,16 @@ void Application::clear(){
     polygonsIndices.clear();
     verticesIndicesLoaded = false;
     segmentLoaded = false;
-    std::cout << "Application cleared\n";
+    LOG(LogLevel::DEBUG) << "Application cleared";
 }
 
 void Application::savePolygonToFile(const std::string& fileName) const{
-    std::cout << "Saving polygon to " << fileName << "\n";
+    LOG(LogLevel::INFO) << "Saving polygon to " << fileName;
     unsigned int numberVertices = getNumberVertices();
     std::ofstream file;
     file.open(fileName);
     if (file.fail()){
-        std::cerr << "ERROR: failed to open file " << fileName << "\n";
+        LOG(LogLevel::ERROR) << "failed to open file " << fileName;
         return;
     }
     file << "# segment\n";
@@ -178,7 +179,7 @@ void Application::savePolygonToFile(const std::string& fileName) const{
         file << vertices[i].x << " " << vertices[i].y << "\n";
     }
     file.close();
-    std::cout << "Polygon correctly saved\n";
+    LOG(LogLevel::INFO) << "Polygon correctly saved";
 }
 
 int Application::searchInFile(const std::string& fileName, const std::string& search, bool drawError){
@@ -202,7 +203,7 @@ int Application::getNumberVerticesFromFile(const std::string& fileName){
     convert >> numberVertices;
     file.close();
     if (numberVertices <= 0 || convert.fail()){
-        std::cout << "ERROR: number of vertices should be a number greather than 0\n";
+        LOG(LogLevel::ERROR) << "number of vertices should be a number greather than 0";
         return -2;
     }
     return numberVertices;
@@ -222,8 +223,8 @@ int Application::loadSegmentFromFile(const std::string& fileName){
         convert.str(line);
         convert >> x >> y;
         if (convert.fail()){
-            std::cerr << "ERROR: problems when reading segment\n";
-            std::cerr << "Line: " << line << "\n";
+            LOG(LogLevel::ERROR) << "problems when reading segment";
+            LOG(LogLevel::ERROR) << "Line: " << line;
             segmentPoints.clear();
             return -3;
         }
@@ -231,14 +232,14 @@ int Application::loadSegmentFromFile(const std::string& fileName){
         segmentPoints.emplace_back(x, y);
     }
     file.close();
-    std::cout << "Correctly loaded segment from " << fileName << "\n";
+    LOG(LogLevel::INFO) << "Correctly loaded segment from " << fileName;
     segmentLoaded = true;
     return 1;
 }
 
 int Application::loadVerticesFromFile(const std::string& fileName, unsigned int numberVertices, bool loadIndices){
     if (numberVertices == 0){
-        std::cerr << "ERROR: number of vertices should be a number greather than 0\n";
+        LOG(LogLevel::ERROR) << "number of vertices should be a number greather than 0";
         return -2;
     }
     std::ifstream file;
@@ -253,8 +254,8 @@ int Application::loadVerticesFromFile(const std::string& fileName, unsigned int 
         convert.str(line);
         convert >> x >> y;
         if (convert.fail()){
-            std::cerr << "ERROR: problems when reading vertices\n";
-            std::cerr << "Line: " << line << "\n";
+            LOG(LogLevel::ERROR) << "problems when reading vertices";
+            LOG(LogLevel::ERROR) << "Line: " << line;
             vertices.clear();
             indices.clear();
             return -3;
@@ -267,7 +268,7 @@ int Application::loadVerticesFromFile(const std::string& fileName, unsigned int 
         }
     }
     file.close();
-    std::cout << "Correctly loaded vertices from " << fileName << "\n";
+    LOG(LogLevel::INFO) << "Correctly loaded vertices from " << fileName;
 
     if (!loadIndices){
         verticesIndicesLoaded = true;
@@ -281,8 +282,8 @@ int Application::loadVerticesFromFile(const std::string& fileName, unsigned int 
     convert.str(line);
     convert >> previousIndex;
     if (convert.fail()){
-        std::cerr << "ERROR: problems when reading indices\n";
-        std::cerr << "Line: " << line << "\n";
+        LOG(LogLevel::ERROR) << "problems when reading indices";
+        LOG(LogLevel::ERROR) << "Line: " << line;
         vertices.clear();
         return -3;
     }
@@ -290,8 +291,8 @@ int Application::loadVerticesFromFile(const std::string& fileName, unsigned int 
     for (unsigned int i = 0; i < numberVertices - 1; i++){
         convert >> index;
         if (convert.fail()){
-            std::cerr << "ERROR: problems when reading indices\n";
-            std::cerr << "Line: " << line << "\n";
+            LOG(LogLevel::ERROR) << "problems when reading indices";
+            LOG(LogLevel::ERROR) << "Line: " << line;
             vertices.clear();
             indices.clear();
             return -3;
@@ -303,7 +304,7 @@ int Application::loadVerticesFromFile(const std::string& fileName, unsigned int 
     indices.push_back(index);
     indices.push_back(firstIndex);
     file.close();
-    std::cout << "Correctly loaded indices from " << fileName << "\n";
+    LOG(LogLevel::INFO) << "Correctly loaded indices from " << fileName;
     verticesIndicesLoaded = true;
     return 1;
 }
@@ -312,7 +313,7 @@ int Application::openFileAndSearch(std::ifstream& file, const std::string fileNa
     file.open(fileName);
     if (file.fail()){
         if (drawError){
-            std::cerr << "ERROR: failed to open file " << fileName << "\n";
+            LOG(LogLevel::ERROR) << "failed to open file " << fileName;
         }
         return 0;
     }
@@ -323,7 +324,7 @@ int Application::openFileAndSearch(std::ifstream& file, const std::string fileNa
         getline(file, line);
         if (file.eof()){
             if (drawError){
-                std::cerr << "ERROR: failed to load " << search << "\n";
+                LOG(LogLevel::ERROR) << "failed to load " << search;
             }
             return -1;
         }

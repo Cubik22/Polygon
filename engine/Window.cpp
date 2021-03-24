@@ -1,4 +1,5 @@
 #include "Window.h"
+#include "Logger.h"
 #include <iostream>
 
 
@@ -29,7 +30,8 @@ Window::Window(const char* name, unsigned int width, unsigned int height) :
     /* Create a windowed mode window and its OpenGL context */
     glWindow = glfwCreateWindow(WIDTH, HEIGHT, name, NULL, NULL);
     if (!glWindow){
-        std::cerr << "ERROR: problems while creating the window\n";
+        //LoggerStatic::Error("problems while creating the window");
+        LOG(LogLevel::ERROR) << "problems while creating the window";
         glfwTerminate();
         exit(-1);
     }
@@ -98,10 +100,12 @@ bool Window::isEscClick() const{
 void Window::initiGLFW(){
     /* Initialize the library */
     if (!glfwInit()){
-        std::cerr << "ERROR: while initializing GLFW\n";
+        //LoggerStatic::Error("problems while initializing GLFW");
+        LOG(LogLevel::ERROR) << "problems while initializing GLFW";
         exit(-1);
     } else{
-        std::cout << "GLFW correctly initialized\n";
+        //LoggerStatic::Message("GLFW initialized correctly");
+        LOG(LogLevel::INFO) << "GLFW initialized correctly";
     }
 }
 
