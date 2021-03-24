@@ -3,12 +3,30 @@
 
 #include <iostream>
 
+#ifdef _WIN32
+
+// stylish way to rename Polygon class in windows.h
+#define Polygon POLYGON
+#include <windows.h>
+#undef Polygon
+// windows.h has also ERROR defined which conflits with LogLevel Error
+#undef ERROR
+
+#define RESET   15
+#define BLUE    11
+#define GREEN   10
+#define YELLOW  14
+#define RED     12
+
+#else
+
 #define RESET   "\033[0m"
 #define BLUE    "\033[34m"
 #define GREEN   "\033[32m"
 #define YELLOW  "\033[33m"
 #define RED     "\033[31m"
 
+#endif
 
 enum class LogLevel{
     DEBUG = 0,
@@ -27,6 +45,26 @@ public:
     LOG& operator<<(const T& message){
         if (logLevel >= LOG::LEVEL){
             opened = true;
+#ifdef _WIN32
+            HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+            if (logLevel == LogLevel::DEBUG){
+                SetConsoleTextAttribute(hConsole, BLUE);
+                std::cout << message;
+                SetConsoleTextAttribute(hConsole, RESET);
+            } else if (logLevel == LogLevel::INFO){
+                SetConsoleTextAttribute(hConsole, GREEN);
+                std::cout << message;
+                SetConsoleTextAttribute(hConsole, RESET);
+            } else if (logLevel == LogLevel::WARN){
+                SetConsoleTextAttribute(hConsole, YELLOW);
+                std::cerr << message;
+                SetConsoleTextAttribute(hConsole, RESET);
+            } else{
+                SetConsoleTextAttribute(hConsole, RED);
+                std::cerr << message;
+                SetConsoleTextAttribute(hConsole, RESET);
+            }
+#else
             if (logLevel == LogLevel::DEBUG){
                 std::cout << BLUE << message << RESET;
             } else if (logLevel == LogLevel::INFO){
@@ -36,6 +74,7 @@ public:
             } else{
                 std::cerr << RED << message << RESET;
             }
+#endif
         }
         return *this;
     }
