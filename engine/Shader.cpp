@@ -46,7 +46,7 @@ unsigned int Shader::compile(unsigned int type, const char *source) const{
         return 0;
     } else {
         //LoggerStatic::Message(nameShader + (const std::string&)" compiled correctly");
-        LOG(LogLevel::INFO) << nameShader << "compiled correctly";
+        LOG(LogLevel::INFO) << nameShader << " compiled correctly";
     }
     return id;
 }
