@@ -104,6 +104,7 @@ void Window::initiGLFW(){
         LOG(LogLevel::ERROR) << "problems while initializing GLFW";
         exit(-1);
     } else{
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
         //LoggerStatic::Message("GLFW initialized correctly");
         LOG(LogLevel::INFO) << "GLFW initialized correctly";
     }

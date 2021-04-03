@@ -150,6 +150,7 @@ void Application::clear(){
     indices.clear();
     mainPolygon = Polygon();
     polygonsIndices.clear();
+    segmentPoints.clear();
     verticesIndicesLoaded = false;
     segmentLoaded = false;
     LOG(LogLevel::DEBUG) << "Application cleared";
