@@ -3,7 +3,8 @@
 
 int main(){
 
-    LOG::LEVEL = LogLevel::INFO;
+    LOG::LEVEL = LogLevel::DEBUG;
+    LOG::PRINT_INFO_LEVEL = false;
 
     Console console;
     console.start();

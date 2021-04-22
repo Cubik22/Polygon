@@ -19,6 +19,7 @@ public:
     const Vector2f& getPoint(unsigned int index) const;
     const std::vector<Vector2f>& getPoints() const;
     const std::vector<unsigned int>& getIndices() const;
+    std::vector<Vector2f> getSegment() const;
     unsigned int getNumberIndices() const;
     const Node* getStartNode() const;
     unsigned int getNumberIntersections() const;
@@ -52,7 +53,8 @@ private:
     // the second parameter is the initial node of the small polygon we are considering
     // node == initialNode if we are creating a new small polygon (maby the function name should be changed)
     // relative position here is different from the RelativePosition used in orientation
-    // this one specify if the small polygon is above or below the segment, obiously is relative, but if always the same convention is applied it works
+    // this one specify if the small polygon is above or below the segment, obiously is relative,
+    // but if always the same convention is applied it works
     // the fourth paramter is a reference to the particular set of indices of the small polygon, empty if the small polygon is just created
     // the last one is the reference to the array of indices of all small polygon, so when a new small polygon is created
     // we can add his new array of indices to the big array of arrays

@@ -3,7 +3,10 @@
 LOG::LOG(LogLevel level) : opened{false}{
     logLevel = level;
 
-    operator<<("["+getLabel(level)+"] ");
+    if (level == LogLevel::WARN || level == LogLevel::ERROR ||
+       (level == LogLevel::INFO && LOG::PRINT_INFO_LEVEL) || (level == LogLevel::DEBUG && LOG::PRINT_DEBUG_LEVEL)){
+        operator<<("["+getLabel(level)+"] ");
+    }
 }
 
 LOG::~LOG(){
@@ -24,6 +27,9 @@ void LOG::NewLine(LogLevel level){
 }
 
 LogLevel LOG::LEVEL = LogLevel::DEBUG;
+
+bool LOG::PRINT_DEBUG_LEVEL = true;
+bool LOG::PRINT_INFO_LEVEL = true;
 
 std::string LOG::getLabel(LogLevel level){
     if (level == LogLevel::DEBUG){

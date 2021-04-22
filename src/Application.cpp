@@ -32,10 +32,7 @@ bool Application::addVertex(const Vector2f &vertex){
         }
     }
     vertices.push_back(vertex);
-    if (numberVertices >= 1){
-        indices.push_back(numberVertices - 1);
-        indices.push_back(numberVertices);
-    }
+    indices.push_back(numberVertices);
     return true;
 }
 
@@ -43,10 +40,7 @@ void Application::removeLastVertex(){
     unsigned int numberVertices = getNumberVertices();
     if (numberVertices > 0){
         vertices.pop_back();
-        if (numberVertices >= 2){
-            indices.pop_back();
-            indices.pop_back();
-        }
+        indices.pop_back();
     }
 }
 
@@ -64,8 +58,6 @@ bool Application::closePolygon(){
             return false;
         }
     }
-    indices.push_back(vertices.size() - 1);
-    indices.push_back(0);
     verticesIndicesLoaded = true;
     return true;
 }
@@ -104,14 +96,15 @@ const Polygon& Application::getPolygon() const{
 
 void Application::createMainPolygon(){
     std::vector<unsigned int> listIndices;
-    for (unsigned int i = 0; i < indices.size() / 2; i++){
-        listIndices.push_back(indices[2 * i]);
+    for (unsigned int i = 0; i < indices.size(); i++){
+        listIndices.push_back(indices[i]);
     }
     mainPolygon.setBody(vertices, listIndices);
 }
 
 
 void Application::cutMainPolygon(){
+    cutted = true;
     mainPolygon.setSegment(segmentPoints[0], segmentPoints[1]);
     mainPolygon.createNetwork();
     //Network::printNetwork(mainPolygon.getStartNode());
@@ -121,6 +114,14 @@ void Application::cutMainPolygon(){
 
 const std::vector<std::vector<unsigned int>*>& Application::getPolygonsIndices() const{
     return polygonsIndices;
+}
+
+void Application::setVerticesIndicesLoaded(){
+    verticesIndicesLoaded = true;
+}
+
+void Application::setSegmentLoaded(){
+    segmentLoaded = true;
 }
 
 bool Application::isVerticesIndicesLoaded() const{
@@ -156,179 +157,46 @@ void Application::clear(){
     LOG(LogLevel::DEBUG) << "Application cleared";
 }
 
-void Application::savePolygonToFile(const std::string& fileName) const{
-    LOG(LogLevel::INFO) << "Saving polygon to " << fileName;
+std::vector<unsigned int>& Application::getIndicesForLoading(){
+    return indices;
+}
+
+std::vector<Vector2f>& Application::getVerticesForLoading(){
+    return vertices;
+}
+
+std::vector<Vector2f>& Application::getSegmentForLoading(){
+    return segmentPoints;
+}
+
+const std::vector<Vector2f>& Application::getBoxVertices() const{
+    return boxVertices;
+}
+
+void Application::createBox(){
     unsigned int numberVertices = getNumberVertices();
-    std::ofstream file;
-    file.open(fileName);
-    if (file.fail()){
-        LOG(LogLevel::ERROR) << "failed to open file " << fileName;
-        return;
-    }
-    file << "# segment\n";
-    file << segmentPoints[0].x << " " << segmentPoints[1].y << "\n";
-    file << segmentPoints[1].x << " " << segmentPoints[1].y << "\n";
-    file << "# number of vertices\n";
-    file << numberVertices << "\n";
-    file << "# indices\n";
-    for (unsigned int i = 0; i < numberVertices - 1; i++){
-        file << indices[2 * i] << " ";
-    }
-    file << indices[2 * (numberVertices - 1)] << "\n";
-    file << "# vertices\n";
-    for (unsigned int i = 0; i < numberVertices; i++){
-        file << vertices[i].x << " " << vertices[i].y << "\n";
-    }
-    file.close();
-    LOG(LogLevel::INFO) << "Polygon correctly saved";
-}
-
-int Application::searchInFile(const std::string& fileName, const std::string& search, bool drawError){
-    std::ifstream file;
-    int found = openFileAndSearch(file, fileName, search, drawError);
-    file.close();
-    return found;
-}
-
-int Application::getNumberVerticesFromFile(const std::string& fileName){
-    std::ifstream file;
-    int found = openFileAndSearch(file, fileName, "number of vertices");
-    if (found != 1){
-        return found;
-    }
-    std::string line;
-    std::stringstream convert;
-    int numberVertices = 0;
-    getline(file, line);
-    convert.str(line);
-    convert >> numberVertices;
-    file.close();
-    if (numberVertices <= 0 || convert.fail()){
-        LOG(LogLevel::ERROR) << "number of vertices should be a number greather than 0";
-        return -2;
-    }
-    return numberVertices;
-}
-
-int Application::loadSegmentFromFile(const std::string& fileName){
-    std::ifstream file;
-    int found = openFileAndSearch(file, fileName, "segment");
-    if (found != 1){
-        return found;
-    }
-    std::string line;
-    std::stringstream convert;
-    for (unsigned int i = 0; i < 2; i++){
-        getline(file, line);
-        float x, y;
-        convert.str(line);
-        convert >> x >> y;
-        if (convert.fail()){
-            LOG(LogLevel::ERROR) << "problems when reading segment";
-            LOG(LogLevel::ERROR) << "Line: " << line;
-            segmentPoints.clear();
-            return -3;
+    float top = vertices[0].y;
+    float bottom = vertices[0].y;
+    float right = vertices[0].x;
+    float left = vertices[0].x;
+    for (unsigned int i = 1; i < numberVertices; i++){
+        const float& x = vertices[i].x;
+        const float& y = vertices[i].y;
+        if (y > top){
+            top = y;
+        } else if (y < bottom){
+            bottom = y;
         }
-        convert.clear();
-        segmentPoints.emplace_back(x, y);
-    }
-    file.close();
-    LOG(LogLevel::INFO) << "Correctly loaded segment from " << fileName;
-    segmentLoaded = true;
-    return 1;
-}
-
-int Application::loadVerticesFromFile(const std::string& fileName, unsigned int numberVertices, bool loadIndices){
-    if (numberVertices == 0){
-        LOG(LogLevel::ERROR) << "number of vertices should be a number greather than 0";
-        return -2;
-    }
-    std::ifstream file;
-    openFileAndSearch(file, fileName, "vertices");
-    std::string line;
-    std::stringstream convert;
-    vertices.reserve(numberVertices);
-    indices.reserve(2 * numberVertices);
-    for (unsigned int i = 0; i < numberVertices; i++){
-        getline(file, line);
-        float x, y;
-        convert.str(line);
-        convert >> x >> y;
-        if (convert.fail()){
-            LOG(LogLevel::ERROR) << "problems when reading vertices";
-            LOG(LogLevel::ERROR) << "Line: " << line;
-            vertices.clear();
-            indices.clear();
-            return -3;
-        }
-        vertices.emplace_back(x, y);
-        convert.clear();
-        if (!loadIndices){
-            indices.push_back(i % numberVertices);
-            indices.push_back((i + 1) % numberVertices);
+        if (x > right){
+            right = x;
+        } else if (x < left){
+            left = x;
         }
     }
-    file.close();
-    LOG(LogLevel::INFO) << "Correctly loaded vertices from " << fileName;
-
-    if (!loadIndices){
-        verticesIndicesLoaded = true;
-        return 1;
-    }
-    openFileAndSearch(file, fileName, "indices");
-    getline(file, line);
-    unsigned int index;
-    unsigned int previousIndex;
-    unsigned int firstIndex;
-    convert.str(line);
-    convert >> previousIndex;
-    if (convert.fail()){
-        LOG(LogLevel::ERROR) << "problems when reading indices";
-        LOG(LogLevel::ERROR) << "Line: " << line;
-        vertices.clear();
-        return -3;
-    }
-    firstIndex = previousIndex;
-    for (unsigned int i = 0; i < numberVertices - 1; i++){
-        convert >> index;
-        if (convert.fail()){
-            LOG(LogLevel::ERROR) << "problems when reading indices";
-            LOG(LogLevel::ERROR) << "Line: " << line;
-            vertices.clear();
-            indices.clear();
-            return -3;
-        }
-        indices.push_back(previousIndex);
-        indices.push_back(index);
-        previousIndex = index;
-    }
-    indices.push_back(index);
-    indices.push_back(firstIndex);
-    file.close();
-    LOG(LogLevel::INFO) << "Correctly loaded indices from " << fileName;
-    verticesIndicesLoaded = true;
-    return 1;
-}
-
-int Application::openFileAndSearch(std::ifstream& file, const std::string fileName, const std::string& search, bool drawError){
-    file.open(fileName);
-    if (file.fail()){
-        if (drawError){
-            LOG(LogLevel::ERROR) << "failed to open file " << fileName;
-        }
-        return 0;
-    }
-    std::string searchLine = "# " + search;
-    std::string line;
-    getline(file, line);
-    while (line != searchLine){
-        getline(file, line);
-        if (file.eof()){
-            if (drawError){
-                LOG(LogLevel::ERROR) << "failed to load " << search;
-            }
-            return -1;
-        }
-    }
-    return 1;
+    boxVertices = {
+        {left, bottom},
+        {right, bottom},
+        {right, top},
+        {left, top}
+    };
 }

@@ -28,8 +28,14 @@ protected:
     void loadVertices2D(const std::vector<Vector2f>& vertices);
     // load indices with vector unsigned int
     void loadIndices(const std::vector<unsigned int>& indices);
-    // load indices for lines of a polygon by simply passing indices order, last index is joined with the first
+    // load indices for lines of a polygon by simply passing indices order, last index is connected with the first
     void loadIndicesLinesPointIndices(const std::vector<unsigned int>& indices);
+    // load indices for lines of a polygon by simply passing indices order
+    void loadIndicesLinesPointIndicesOpen(const std::vector<unsigned int>& indices);
+    // load default indices: 0, 1, 2, 3 ecc
+    // open if you don't want to connect last vertex with first one
+    void loadIndicesDefault(unsigned int size, bool open);
+
     void bindAll() const;
 };
 
@@ -62,7 +68,22 @@ class LinesPointIndices : public Shape{
 public:
     LinesPointIndices(const std::vector<float>& vertices, const std::vector<unsigned int>& indices);
     LinesPointIndices(const std::vector<Vector2f>& vertices, const std::vector<unsigned int>& indices);
+    // default indices: 0, 1, 2, 3 ecc
+    LinesPointIndices(const std::vector<Vector2f>& vertices);
     ~LinesPointIndices() override;
+    void draw() const override;
+};
+
+// list of lines of a polygon, indices specify order of vertices, last vertex is not joined with the first one
+
+class LinesPointIndicesOpen : public Shape{
+
+public:
+    LinesPointIndicesOpen(const std::vector<float>& vertices, const std::vector<unsigned int>& indices);
+    LinesPointIndicesOpen(const std::vector<Vector2f>& vertices, const std::vector<unsigned int>& indices);
+    // default indices: 0, 1, 2, 3 ecc
+    LinesPointIndicesOpen(const std::vector<Vector2f>& vertices);
+    ~LinesPointIndicesOpen() override;
     void draw() const override;
 };
 

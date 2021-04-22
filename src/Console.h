@@ -24,12 +24,15 @@ private:
 
     void terminate();
     void drawFillingDoubleBuffers();
+    void drawNoInput();
+
     void askLoadFromFile();
     void initWindowAndLibraries();
     void drawPolygon();
     void createPolygon();
     void drawSegment();
     void drawCuttedPolygon();
+    void drawBox();
     void askSaveToFile();
 };
 

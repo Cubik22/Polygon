@@ -35,7 +35,7 @@ void Network::deleteNetwork(Node *start){
         return;
     }
     while (node != start){
-        LOG(LogLevel::DEBUG) << "deleted";
+        //LOG(LogLevel::DEBUG) << "deleted";
         tmp = node->next;
         delete node;
         node = tmp;

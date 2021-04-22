@@ -18,6 +18,7 @@ public:
     bool shouldClose() const;
     void swapBuffer() const;
     void waitEvents() const;
+    void pollEvents() const;
     void processImput();
     bool isLeftClick() const;
     bool isEnterClick() const;

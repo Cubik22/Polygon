@@ -1,5 +1,6 @@
 #include "Console.h"
 #include "Logger.h"
+#include "Loader.h"
 #include <fstream>
 
 Console::Console() : window{nullptr}, renderer{nullptr} {}
@@ -20,6 +21,8 @@ void Console::start(){
         drawSegment();
     }
     drawCuttedPolygon();
+    drawBox();
+    terminate();
     askSaveToFile();
 }
 
@@ -41,6 +44,23 @@ void Console::drawFillingDoubleBuffers(){
     renderer->drawShapes();
 }
 
+void Console::drawNoInput(){
+    while (true){
+        if (window->shouldClose()){
+            terminate();
+            exit(-1);
+        }
+        window->processImput();
+        if (window->isEnterClick() || window->isBackClick() || window->isEscClick()){
+            break;
+        }
+        renderer->clear();
+        renderer->drawShapes();
+        window->swapBuffer();
+        window->waitEvents();
+    }
+}
+
 void Console::askLoadFromFile(){
     std::string consoleString;
 
@@ -53,51 +73,65 @@ void Console::askLoadFromFile(){
             std::cout << "Enter the name of the file you what to load polygon from: ";
             std::string fileName;
             std::getline(std::cin, fileName);
-            int numberVertices = app.getNumberVerticesFromFile(fileName);
+            fileName = "files/" + fileName;
+            int numberVertices = Loader::GetNumberVerticesFromFile(fileName);
             if (numberVertices <= 0){
                 continueLoop = true;
                 continue;
             }
-            if (app.searchInFile(fileName, "vertices") <= 0){
+            if (Loader::SearchInFile(fileName, "vertices") <= 0){
                 continueLoop = true;
                 continue;
             } else{
                 LOG(LogLevel::INFO) << "Vertices found";
             }
-            if (app.searchInFile(fileName, "indices", false) > 0){
+            if (Loader::SearchInFile(fileName, "indices", false) > 0){
                 LOG(LogLevel::INFO) << "Indices found";
                 std::cout << "Do you want to load indices? (If not it is assumed that vertices are in order) [Y/n] ";
                 std::getline(std::cin, consoleString);
                 if (consoleString == "n" || consoleString == "N"){
-                    if (app.loadVerticesFromFile(fileName, numberVertices, false) < 0){
+                    if (Loader::LoadVerticesFromFile(app.getVerticesForLoading(), app.getIndicesForLoading(),
+                                                     fileName, numberVertices, false) < 0){
                         continueLoop = true;
                         continue;
+                    } else{
+                        app.setVerticesIndicesLoaded();
                     }
                 } else{
-                    if (app.loadVerticesFromFile(fileName, numberVertices, true) < 0){
+                    if (Loader::LoadVerticesFromFile(app.getVerticesForLoading(), app.getIndicesForLoading(),
+                                                     fileName, numberVertices, true) < 0){
                         continueLoop = true;
                         continue;
+                    } else{
+                        app.setVerticesIndicesLoaded();
                     }
                 }
             } else{
-                if (app.loadVerticesFromFile(fileName, numberVertices, false) < 0){
+                if (Loader::LoadVerticesFromFile(app.getVerticesForLoading(), app.getIndicesForLoading(),
+                                                 fileName, numberVertices, false) < 0){
                     continueLoop = true;
                     continue;
+                } else{
+                    app.setVerticesIndicesLoaded();
                 }
             }
-            if (app.searchInFile(fileName, "segment", false) > 0){
+            if (Loader::SearchInFile(fileName, "segment", false) > 0){
                 LOG(LogLevel::INFO) << "Segment found";
                 std::cout << "Do you want to load it? [y/N] ";
                 std::getline(std::cin, consoleString);
                 if (consoleString == "y" || consoleString == "Y"){
-                    if (app.loadSegmentFromFile(fileName) < 0){
+                    if (Loader::LoadSegmentFromFile(app.getSegmentForLoading(), fileName) < 0){
                         LOG(LogLevel::WARN) << "Segment not loaded";
+                    } else{
+                        app.setSegmentLoaded();
                     }
                 }
             }
         }
     }
     LOG::NewLine();
+//    app.printVertices();
+//    app.printIndices();
 }
 
 void Console::initWindowAndLibraries(){
@@ -126,7 +160,7 @@ void Console::drawPolygon(){
             app.removeLastVertex();
         }
         bool added = app.addVertex({(float)window->getXMouse(), (float)window->getYMouse()});
-        renderer->replaceShape(0, new Lines(app.getVertices(), app.getIndices()));
+        renderer->replaceShape(0, new LinesPointIndicesOpen(app.getVertices(), app.getIndices()));
 
         renderer->drawShapes();
 
@@ -161,8 +195,8 @@ void Console::drawSegment(){
             terminate();
             exit(-1);
         }
-        renderer->clear();
         window->processImput();
+        renderer->clear();
 
         if (window->isBackClick() || window->isEscClick()){
             app.removeSegmentPoint();
@@ -211,18 +245,15 @@ void Console::drawCuttedPolygon(){
         renderer->addShape(shapeNuova);
     }
 
-    drawFillingDoubleBuffers();
+    drawNoInput();
 
-    while (!window->shouldClose()){
-        window->processImput();
-        if (window->isEnterClick() || window->isBackClick() || window->isEscClick()){
-            break;
-        }
-        window->waitEvents();
-    }
     LOG::NewLine(LogLevel::INFO);
+}
 
-    terminate();
+void Console::drawBox(){
+    app.createBox();
+    renderer->addShape(new LinesPointIndices(app.getBoxVertices()));
+    drawNoInput();
 }
 
 void Console::askSaveToFile(){
@@ -237,6 +268,7 @@ void Console::askSaveToFile(){
             repeat = false;
             std::cout << "Enter the name of the file you want to save polygon to: ";
             std::getline(std::cin, fileName);
+            fileName = "files/" + fileName;
             std::ifstream tryFile;
             tryFile.open(fileName);
             if (!tryFile.fail()){
@@ -248,7 +280,7 @@ void Console::askSaveToFile(){
                 }
             }
         }
-        app.savePolygonToFile(fileName);
+        Loader::SavePolygonToFile(app.getVertices(), app.getIndices(), app.getSegmentPoints(), app.getPolygonsIndices(), fileName);
     }
 }
 

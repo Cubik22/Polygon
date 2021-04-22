@@ -70,6 +70,10 @@ void Window::waitEvents() const{
     glfwWaitEvents();
 }
 
+void Window::pollEvents() const{
+    glfwPollEvents();
+}
+
 void Window::processImput(){
     bool glMouseLeftPressed = glfwGetMouseButton(glWindow, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS;
     updatePressedClick(glMouseLeftPressed, mouseLeftPressed, mouseLeftClick);

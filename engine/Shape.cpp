@@ -2,6 +2,8 @@
 #include "GL/glew.h"
 #include <stdlib.h>
 
+#include "Logger.h"
+
 const unsigned int Shape::DIMENSIONS = 2;
 
 Shape::~Shape() {}
@@ -49,6 +51,35 @@ void Shape::loadIndicesLinesPointIndices(const std::vector<unsigned int> &indice
     ib.sendData(indicesArray, numberIndices);
 }
 
+void Shape::loadIndicesLinesPointIndicesOpen(const std::vector<unsigned int> &indices){
+    unsigned int sizeIndices = indices.size() - 1;
+    unsigned int numberIndices = 2 * sizeIndices;
+    unsigned int indicesArray[numberIndices];
+    for (unsigned int i = 0; i < sizeIndices; i++){
+        indicesArray[2 * i] = indices[i];
+        indicesArray[2 * i + 1] = indices[i + 1];
+    }
+    ib.sendData(indicesArray, numberIndices);
+}
+
+void Shape::loadIndicesDefault(unsigned int size, bool open){
+    if (open){
+        size--;
+    }
+    unsigned int numberIndices = 2 * size;
+    unsigned int indicesArray[numberIndices];
+    for (unsigned int i = 0; i < size - 1; i++){
+        indicesArray[2 * i] = i;
+        indicesArray[2 * i + 1] = i + 1;
+    }
+    indicesArray[numberIndices - 2] = size - 1;
+    if (open){
+        indicesArray[numberIndices - 1] = size;
+    } else{
+        indicesArray[numberIndices - 1] = 0;
+    }
+    ib.sendData(indicesArray, numberIndices);
+}
 
 void Shape::bindAll() const{
     vb.bind();
@@ -100,9 +131,36 @@ LinesPointIndices::LinesPointIndices(const std::vector<Vector2f> &vertices, cons
     loadIndicesLinesPointIndices(indices);
 }
 
+LinesPointIndices::LinesPointIndices(const std::vector<Vector2f>& vertices){
+    loadVertices2D(vertices);
+    loadIndicesDefault(vertices.size(), false);
+}
+
 LinesPointIndices::~LinesPointIndices() {}
 
 void LinesPointIndices::draw() const{
+    bindAll();
+    glDrawElements(GL_LINES, ib.getCount(), GL_UNSIGNED_INT, nullptr);
+}
+
+LinesPointIndicesOpen::LinesPointIndicesOpen(const std::vector<float> &vertices, const std::vector<unsigned int> &indices){
+    loadVertices(vertices);
+    loadIndicesLinesPointIndicesOpen(indices);
+}
+
+LinesPointIndicesOpen::LinesPointIndicesOpen(const std::vector<Vector2f> &vertices, const std::vector<unsigned int> &indices){
+    loadVertices2D(vertices);
+    loadIndicesLinesPointIndicesOpen(indices);
+}
+
+LinesPointIndicesOpen::LinesPointIndicesOpen(const std::vector<Vector2f>& vertices){
+    loadVertices2D(vertices);
+    loadIndicesDefault(vertices.size(), true);
+}
+
+LinesPointIndicesOpen::~LinesPointIndicesOpen() {}
+
+void LinesPointIndicesOpen::draw() const{
     bindAll();
     glDrawElements(GL_LINES, ib.getCount(), GL_UNSIGNED_INT, nullptr);
 }

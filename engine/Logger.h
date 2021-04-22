@@ -28,6 +28,9 @@
 
 #endif
 
+#define LDEB LOG(LogLevel::DEBUG)
+#define LINF LOG(LogLevel::INFO)
+
 enum class LogLevel{
     DEBUG = 0,
     INFO = 1,
@@ -80,6 +83,13 @@ public:
     }
 
     static LogLevel LEVEL;
+
+    // if you don't want to see [DEBUG] in front of every message
+    static bool PRINT_DEBUG_LEVEL;
+    // if you don't want to see [INFO] in front of every message
+    static bool PRINT_INFO_LEVEL;
+
+    // for WARN and ERROR, [WARN] and [ERROR] is always printed
 
     static void NewLine(LogLevel level = LogLevel::ERROR);
 

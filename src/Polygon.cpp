@@ -53,6 +53,10 @@ const std::vector<unsigned int>& Polygon::getIndices() const{
     return indices;
 }
 
+std::vector<Vector2f> Polygon::getSegment() const{
+    return {p1, p2};
+}
+
 const Node* Polygon::getStartNode() const{
     return startNode;
 }
@@ -232,7 +236,7 @@ void Polygon::sortIntersectionsNetwork(const std::vector<Node*>& nodes){
 
     Vector2f segment = p2 - p1;
     for (unsigned int i = 1; i < nodesLenght; i++){
-        LOG(LogLevel::DEBUG) << "node: " << minNode->getIndex();
+        //LOG(LogLevel::DEBUG) << "node: " << minNode->getIndex();
         double minProduct = Polygon::BIG_DOUBLE;
         for (unsigned int n = 0; n < nodesLenght; n++){
             if (nodes[n]->down == nullptr){

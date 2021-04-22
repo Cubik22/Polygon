@@ -71,6 +71,8 @@ list(APPEND source_code ${CMAKE_CURRENT_SOURCE_DIR}/src/Network.cpp)
 list(APPEND source_code ${CMAKE_CURRENT_SOURCE_DIR}/src/Network.h)
 list(APPEND source_code ${CMAKE_CURRENT_SOURCE_DIR}/src/Console.cpp)
 list(APPEND source_code ${CMAKE_CURRENT_SOURCE_DIR}/src/Console.h)
+list(APPEND source_code ${CMAKE_CURRENT_SOURCE_DIR}/src/Loader.cpp)
+list(APPEND source_code ${CMAKE_CURRENT_SOURCE_DIR}/src/Loader.h)
 
 # Add Unit Tests code
 #include_directories(${CMAKE_CURRENT_SOURCE_DIR}/test)
@@ -84,4 +86,13 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/engine)
 # Set Unit Tests
 target_link_libraries(${PROJECT_NAME} PUBLIC Threads::Threads engine)
 #gtest_discover_tests(${PROJECT_NAME})
+
+# copy resources files to build directory
+add_custom_command(
+        TARGET ${PROJECT_NAME} PRE_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                ${CMAKE_CURRENT_SOURCE_DIR}/files
+                ${CMAKE_CURRENT_BINARY_DIR}/files)
+
+
 
