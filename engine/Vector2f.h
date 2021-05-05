@@ -18,9 +18,12 @@ public:
     Vector2f operator+(const Vector2f& other) const;
     Vector2f operator-(const Vector2f& other) const;
     double dot(const Vector2f& other) const;
+    double cross(const Vector2f& other) const;
     double normSquared() const;
-};
 
+    static const double TOLERANCE;
+    static bool AreDoublesEqual(double a, double b);
+};
 std::ostream& operator<< (std::ostream& ostrem, const Vector2f& point);
 
 #endif // VECTOR2F_H

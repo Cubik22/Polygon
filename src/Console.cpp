@@ -1,6 +1,7 @@
 #include "Console.h"
 #include "Logger.h"
 #include "Loader.h"
+#include "Element.h"
 #include <fstream>
 
 Console::Console() : window{nullptr}, renderer{nullptr} {}
@@ -17,11 +18,13 @@ void Console::start(){
         drawPolygon();
     }
     createPolygon();
-    if (!app.isSegmentLoaded()){
-        drawSegment();
-    }
-    drawCuttedPolygon();
-    drawBox();
+    createElement();
+//    if (!app.isSegmentLoaded()){
+//        drawSegment();
+//    }
+//    drawCuttedPolygon();
+    //drawBox();
+    //moveAround();
     terminate();
     askSaveToFile();
 }
@@ -139,10 +142,10 @@ void Console::initWindowAndLibraries(){
 
     window = new Window("Polygon", WIDTH, HEIGHT);
 
+    Renderer::PRINT_INFO = false;
     Renderer::initGLEW();
 
     renderer = new Renderer();
-    renderer->setPolygonColorFloat(WHITE);
 
     LOG::NewLine(LogLevel::INFO);
 }
@@ -160,15 +163,18 @@ void Console::drawPolygon(){
             app.removeLastVertex();
         }
         bool added = app.addVertex({(float)window->getXMouse(), (float)window->getYMouse()});
-        renderer->replaceShape(0, new LinesPointIndicesOpen(app.getVertices(), app.getIndices()));
+        //renderer->replaceShape(0, new LinesPointIndicesOpen(app.getVertices(), app.getIndices()));
+        std::vector<float> color = Renderer::getLastColor();
+        renderer->replaceShape(0, new Shape(app.getVertices(), app.getIndices(), GeometricPrimitive::LinePointOpen,
+                                            color[0], color[1], color[2]));
 
         renderer->drawShapes();
 
-        if (!window->isLeftClick() && added){
+        if (!window->isMouseLeftClick() && added){
             app.removeLastVertex();
         }
 
-        if (window->isEnterClick()){
+        if (window->isEnterClick() || window->isMouseRightClick()){
             if (app.closePolygon()){
                 end = true;
             } else{
@@ -184,7 +190,11 @@ void Console::drawPolygon(){
 void Console::createPolygon(){
     app.createMainPolygon();
     const Polygon& polygon = app.getPolygon();
-    renderer->replaceShape(0, new LinesPointIndices(polygon.getPoints(), polygon.getIndices()));
+//    renderer->replaceShape(0, new LinesPointIndices(polygon.getPoints(), polygon.getIndices()));
+    std::vector<float> color = Renderer::getLastColor();
+    renderer->replaceShape(0, new Shape(polygon.getPoints(), polygon.getIndices(), GeometricPrimitive::LinePointClosed,
+                                        color[0], color[1], color[2]));
+    Renderer::getNextColor();
     drawFillingDoubleBuffers();
 }
 
@@ -203,15 +213,24 @@ void Console::drawSegment(){
         }
 
         app.addSegmentPoint({(float)window->getXMouse(), (float)window->getYMouse()});
-        if (app.getSegmentSize() == 1){
-            renderer->replaceShape(1, new Lines(app.getSegmentPoints(), {}));
-        } else if (app.getSegmentSize() == 2){
-            renderer->replaceShape(1, new Lines(app.getSegmentPoints(), {0, 1}));
+//        if (app.getSegmentSize() == 1){
+////            renderer->replaceShape(1, new Lines(app.getSegmentPoints(), {}));
+//            renderer->replaceShape(1, new Shape(app.getSegmentPoints(), GeometricPrimitive::LinePointOpen));
+//        } else if (app.getSegmentSize() == 2){
+////            renderer->replaceShape(1, new Lines(app.getSegmentPoints(), {0, 1}));
+//            renderer->replaceShape(1, new Shape(app.getSegmentPoints(), GeometricPrimitive::LinePointOpen));
+//        }
+        if (app.getSegmentSize() == 1 || app.getSegmentSize() == 2){
+            std::vector<float> color = Renderer::getLastColor();
+            renderer->replaceShape(1, new Shape(app.getSegmentPoints(), GeometricPrimitive::LinePointOpen,
+                                                color[0], color[1], color[2]));
+        } else{
+            LOG(LogLevel::DEBUG) << "3 points in segment";
         }
 
         renderer->drawShapes();
 
-        if (!window->isLeftClick()){
+        if (!window->isMouseLeftClick()){
             app.removeSegmentPoint();
         }
 
@@ -241,19 +260,16 @@ void Console::drawCuttedPolygon(){
             }
         }
 
-        Shape* shapeNuova = new LinesPointIndices(app.getPolygon().getPoints(), indices);
+//        Shape* shapeNuova = new LinesPointIndices(app.getPolygon().getPoints(), indices);
+        std::vector<float> color = Renderer::getNextColor();
+        Shape* shapeNuova = new Shape(app.getPolygon().getPoints(), indices, GeometricPrimitive::LinePointClosed,
+                                      color[0], color[1], color[2]);
         renderer->addShape(shapeNuova);
     }
 
     drawNoInput();
 
     LOG::NewLine(LogLevel::INFO);
-}
-
-void Console::drawBox(){
-    app.createBox();
-    renderer->addShape(new LinesPointIndices(app.getBoxVertices()));
-    drawNoInput();
 }
 
 void Console::askSaveToFile(){
@@ -284,5 +300,96 @@ void Console::askSaveToFile(){
     }
 }
 
+void Console::drawBox(){
+    app.createBox();
+//    renderer->addShape(new LinesPointIndices(app.getBoxVertices()));
+    std::vector<float> color = Renderer::getNextColor();
+    renderer->addShape(new Shape(app.getBoxVertices(), GeometricPrimitive::LinePointClosed,
+                                 color[0], color[1], color[2]));
+    drawNoInput();
+    renderer->removeLastShape();
+    renderer->removeLastShape();
 
+    //moveAround();
 
+    float min = 0.2;
+    float side = 0.2;
+    unsigned int number = (2 - 2 * min) / side;
+
+    app.createGrid(-1 + min, -1 + min, side, side, number, number);
+    for (unsigned int x = 0; x < number; x++){
+        for (unsigned int y = 0; y < number; y++){
+            //renderer->addShape(new LinesPointIndices(app.getBox(x * number + y), app.getIndices()));
+            std::vector<float> color = Renderer::getNextColor();
+            renderer->addShape(new Shape(app.getBox(x * number + y), app.getIndices(), GeometricPrimitive::LinePointClosed,
+                                         color[0], color[1], color[2]));
+        }
+    }
+
+    drawNoInput();
+}
+
+void Console::moveAround(){
+    app.createBox();
+    app.copyPolygon(0, 0, app.getWidth(), app.getHeight());
+    const std::vector<Vector2f>& box = app.getBox(0);
+//    renderer->replaceShape(0, new LinesPointIndices(box, app.getIndices()));
+    std::vector<float> color = Renderer::getNextColor();
+    renderer->replaceShape(0, new Shape(box, app.getIndices(), GeometricPrimitive::LinePointClosed, color[0], color[1], color[2]));
+    Renderer::getNextColor();
+
+    float change = 0.1;
+
+    while (true){
+        if (window->shouldClose()){
+            terminate();
+            exit(-1);
+        }
+        window->processImput();
+        if (window->isEnterClick() || window->isBackClick() || window->isEscClick()){
+            break;
+        }
+        if (window->isUpClick()){
+            app.movePolygon(0, 0, change);
+        }
+        if (window->isDownClick()){
+            app.movePolygon(0, 0, -change);
+        }
+        if (window->isRightClick()){
+            app.movePolygon(0, change, 0);
+        }
+        if (window->isLeftClick()){
+            app.movePolygon(0, -change, 0);
+        }
+//        renderer->replaceShape(0, new LinesPointIndices(app.getBox(0), app.getIndices()));
+        std::vector<float> color = Renderer::getLastColor();
+        renderer->replaceShape(0, new Shape(app.getBox(0), app.getIndices(), GeometricPrimitive::LinePointClosed,
+                                            color[0], color[1], color[2]));
+        renderer->clear();
+        renderer->drawShapes();
+        window->swapBuffer();
+        window->waitEvents();
+    }
+}
+
+void Console::createElement(){
+    renderer->removeAllShapes();
+
+    Element element = Element(app.getPolygon());
+    element.createElement();
+
+    const std::vector<Vector2f>& points = element.getPoints();
+    const std::vector<std::vector<unsigned int>*>& polygonsIndices = element.getPolygonsIndices();
+
+    for (unsigned int i = 0; i < polygonsIndices.size(); i++){
+        const std::vector<unsigned int>& indices = *polygonsIndices[i];
+
+    //        Shape* shapeNuova = new LinesPointIndices(app.getPolygon().getPoints(), indices);
+        std::vector<float> color = Renderer::getNextColor();
+        Shape* shapeNuova = new Shape(points, indices, GeometricPrimitive::LinePointClosed,
+                                      color[0], color[1], color[2]);
+        renderer->addShape(shapeNuova);
+    }
+
+    drawNoInput();
+}

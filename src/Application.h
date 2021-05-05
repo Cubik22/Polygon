@@ -47,7 +47,17 @@ public:
     std::vector<Vector2f>& getSegmentForLoading();
 
     const std::vector<Vector2f>& getBoxVertices() const;
+    const std::vector<Vector2f>& getDefautVertices() const;
+    const std::vector<Vector2f>& getBox(unsigned int position) const;
+    const float& getWidth() const;
+    const float& getHeight() const;
+
     void createBox();
+
+    void copyPolygon(float x, float y, float width, float height);
+    void movePolygon(unsigned int number, float x, float y);
+
+    void createGrid(float xMin, float yMin, float width, float height, unsigned int numberX, unsigned int numberY);
 
 private:
     bool verticesIndicesLoaded;
@@ -60,6 +70,14 @@ private:
     std::vector<std::vector<unsigned int>*> polygonsIndices;
 
     std::vector<Vector2f> boxVertices;
+    std::vector<Vector2f> defaultVertices;
+
+    float width;
+    float height;
+    float xMin;
+    float yMin;
+
+    std::vector<std::vector<Vector2f>> boxes;
 };
 
 #endif // APPLICATION_H

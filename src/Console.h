@@ -32,8 +32,12 @@ private:
     void createPolygon();
     void drawSegment();
     void drawCuttedPolygon();
-    void drawBox();
     void askSaveToFile();
+
+    void drawBox();
+    void moveAround();
+
+    void createElement();
 };
 
 #endif // CONSOLE_H

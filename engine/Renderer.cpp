@@ -3,21 +3,7 @@
 #include "Logger.h"
 #include <iostream>
 
-Renderer::Renderer() : shader(getVertexShader(), getFragmentShader()) {
-    colors = {
-        255,   0,   0,      //red
-          0, 255,   0,      //lime
-          0,   0, 255,      //blue
-        255, 255,   0,      //yellow
-          0, 255, 255,      //cyan
-        255, 250, 205,      //lemon
-        255,   0, 255,      //magenta
-        139,   0,   0,      //dark red
-          0, 128,   0,      //green
-        138,  43, 226,      //blue violet
-        255,  20, 147       //deep pink
-    };
-}
+Renderer::Renderer() : shader(getVertexShader(), getFragmentShader()) {}
 
 void Renderer::addShape(const Shape* shape){
     shapes.push_back(shape);
@@ -39,12 +25,20 @@ void Renderer::removeLastShape(){
     }
 }
 
+void Renderer::removeAllShapes(){
+    while (shapes.size() > 0){
+        delete shapes[shapes.size() - 1];
+        shapes.pop_back();
+    }
+}
+
 void Renderer::drawShapes() const{
     shader.bind();
     for (unsigned int i = 0; i < shapes.size(); i++){
         const Shape* shape = shapes[i];
-        unsigned int colorsSize = colors.size();
-        setPolygonColorRGB(colors[(3 * i) % colorsSize], colors[(3 * i + 1) % colorsSize], colors[(3 * i + 2) % colorsSize]);
+//        unsigned int colorsSize = Colors.size();
+//        setPolygonColorRGB(Colors[(3 * i) % colorsSize], Colors[(3 * i + 1) % colorsSize], Colors[(3 * i + 2) % colorsSize]);
+        setPolygonColorFloat(shape->getRGB());
         shape->draw();
     }
 }
@@ -53,15 +47,7 @@ void Renderer::clear() const{
     glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void Renderer::setPolygonColorFloat(float r, float g, float b) const{
-    shader.bind();
-    shader.setUniform4f("u_Color", r, g, b, 1.0f);
-}
-
-void Renderer::setPolygonColorRGB(unsigned int r, unsigned int g, unsigned int b) const{
-    shader.bind();
-    shader.setUniform4f("u_Color", r / 255.0, g / 255.0, b / 255.0, 1.0f);
-}
+bool Renderer::PRINT_INFO = true;
 
 void Renderer::initGLEW(){
     if (glewInit() != GLEW_OK){
@@ -72,18 +58,20 @@ void Renderer::initGLEW(){
         LOG(LogLevel::INFO) << "Glew initialized correctly";
     }
 
-    //LoggerStatic::Message((const std::string&)"VERSION: " + (const char*)glGetString(GL_VERSION));
-    LOG(LogLevel::INFO) << "VERSION: " << glGetString(GL_VERSION);
+    if (Renderer::PRINT_INFO){
+        //LoggerStatic::Message((const std::string&)"VERSION: " + (const char*)glGetString(GL_VERSION));
+        LOG(LogLevel::INFO) << "VERSION: " << glGetString(GL_VERSION);
 
-    // Returns the vendor
-    auto vendor = (const char*)glGetString(GL_VENDOR);
-    // Returns a hint to the model
-    auto model = (const char*)glGetString(GL_RENDERER);
+        // Returns the vendor
+        auto vendor = (const char*)glGetString(GL_VENDOR);
+        // Returns a hint to the model
+        auto model = (const char*)glGetString(GL_RENDERER);
 
-    //LoggerStatic::Message((const std::string&)"VENDOR: " + vendor);
-    LOG(LogLevel::INFO) << "VENDOR: " << vendor;
-    //LoggerStatic::Message((const std::string&)"MODEL: " + model);
-    LOG(LogLevel::INFO) << "MODEL: " << model;
+        //LoggerStatic::Message((const std::string&)"VENDOR: " + vendor);
+        LOG(LogLevel::INFO) << "VENDOR: " << vendor;
+        //LoggerStatic::Message((const std::string&)"MODEL: " + model);
+        LOG(LogLevel::INFO) << "MODEL: " << model;
+    }
 
     // enable setting gl_PointSize in Vertex Shader
     glEnable(GL_PROGRAM_POINT_SIZE);
@@ -96,7 +84,65 @@ void Renderer::setLineWidth(unsigned int width){
     glLineWidth(width);
 }
 
-const char *Renderer::getVertexShader() const{
+unsigned int Renderer::NumberColor = 0;
+
+std::vector<float> Renderer::getNextColor(){
+    Renderer::NumberColor++;
+    return getLastColor();
+}
+
+std::vector<float> Renderer::getLastColor(){
+    unsigned int colorsSize = Colors.size();
+    return {Colors[(3 * Renderer::NumberColor) % colorsSize] / 255.0f,
+            Colors[(3 * Renderer::NumberColor + 1) % colorsSize] / 255.0f,
+            Colors[(3 * Renderer::NumberColor + 2) % colorsSize] / 255.0f};
+}
+
+// PRIVATE
+
+void Renderer::setPolygonColorFloat(float r, float g, float b) const{
+    shader.bind();
+    shader.setUniform4f("u_Color", r, g, b, 1.0f);
+}
+
+void Renderer::setPolygonColorFloat(std::vector<float> rgb) const{
+    if (rgb.size() != 3){
+        LOG(LogLevel::ERROR) << "float vector color should have size 3";
+        return;
+    }
+    shader.bind();
+    shader.setUniform4f("u_Color", rgb[0], rgb[1], rgb[2], 1.0f);
+}
+
+void Renderer::setPolygonColorRGB(unsigned int r, unsigned int g, unsigned int b) const{
+    shader.bind();
+    shader.setUniform4f("u_Color", r / 255.0, g / 255.0, b / 255.0, 1.0f);
+}
+
+void Renderer::setPolygonColorRGB(std::vector<unsigned int> rgb) const{
+    if (rgb.size() != 3){
+        LOG(LogLevel::ERROR) << "unsigned int vector color should have size 3";
+        return;
+    }
+    shader.bind();
+    shader.setUniform4f("u_Color", rgb[0] / 255.0, rgb[1] / 255.0, rgb[2] / 255.0, 1.0f);
+}
+
+std::vector<unsigned int> Renderer::Colors = {
+    255,   0,   0,      //red
+      0, 255,   0,      //lime
+      0,   0, 255,      //blue
+    255, 255,   0,      //yellow
+      0, 255, 255,      //cyan
+    255, 250, 205,      //lemon
+    255,   0, 255,      //magenta
+    139,   0,   0,      //dark red
+      0, 128,   0,      //green
+    138,  43, 226,      //blue violet
+    255,  20, 147       //deep pink
+};
+
+const char *Renderer::getVertexShader(){
     return  "#version 330 core\n"
             "layout(location = 0) in vec2 position;\n"
             "void main(){\n"
@@ -104,7 +150,7 @@ const char *Renderer::getVertexShader() const{
             "   gl_Position = vec4(position, 0, 1);\n"
             "};";
 }
-const char *Renderer::getFragmentShader() const{
+const char *Renderer::getFragmentShader(){
     return  "#version 330 core\n"
             "layout(location = 0) out vec4 color;\n"
             "uniform vec4 u_Color;\n"

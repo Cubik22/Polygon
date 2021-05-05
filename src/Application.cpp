@@ -173,30 +173,96 @@ const std::vector<Vector2f>& Application::getBoxVertices() const{
     return boxVertices;
 }
 
+const std::vector<Vector2f>& Application::getDefautVertices() const{
+    return defaultVertices;
+}
+
+const std::vector<Vector2f>& Application::getBox(unsigned int position) const{
+    if (boxes.size() > position){
+        return boxes[position];
+    } else{
+        LOG(LogLevel::ERROR) << "vector out of bound in Application::getBox";
+        return boxes[0];
+    }
+}
+
+const float& Application::getWidth() const{
+    return width;
+}
+
+const float& Application::getHeight() const{
+    return height;
+}
+
 void Application::createBox(){
     unsigned int numberVertices = getNumberVertices();
-    float top = vertices[0].y;
-    float bottom = vertices[0].y;
     float right = vertices[0].x;
     float left = vertices[0].x;
+    float top = vertices[0].y;
+    float bottom = vertices[0].y;
     for (unsigned int i = 1; i < numberVertices; i++){
         const float& x = vertices[i].x;
         const float& y = vertices[i].y;
-        if (y > top){
-            top = y;
-        } else if (y < bottom){
-            bottom = y;
-        }
         if (x > right){
             right = x;
         } else if (x < left){
             left = x;
         }
+        if (y > top){
+            top = y;
+        } else if (y < bottom){
+            bottom = y;
+        }
     }
+
     boxVertices = {
         {left, bottom},
         {right, bottom},
         {right, top},
         {left, top}
     };
+    width = right - left;
+    height = top - bottom;
+    xMin = left;
+    yMin = bottom;
+
+    for (unsigned int i = 0; i < numberVertices; i++){
+        float y = vertices[i].y - bottom;
+        float x = vertices[i].x - left;
+        //defaultVertices.emplace_back((2 * x / width) - 1, (2 * y / height) - 1);
+        defaultVertices.emplace_back(x / width, y / height);
+    }
+}
+
+void Application::copyPolygon(float x, float y, float width, float height){
+    unsigned int numberVertices = getNumberVertices();
+    std::vector<Vector2f> newPolygon;
+    newPolygon.reserve(numberVertices);
+
+    for (unsigned int i = 0; i < numberVertices; i++){
+        newPolygon.emplace_back(defaultVertices[i].x * width + x, defaultVertices[i].y * height + y);
+    }
+    boxes.push_back(newPolygon);
+}
+
+void Application::movePolygon(unsigned int number, float x, float y){
+    if (number >= boxes.size()){
+        return;
+    }
+    std::vector<Vector2f>& vert = boxes[number];
+    unsigned int numberVertices = getNumberVertices();
+
+    for (unsigned int i = 0; i < numberVertices; i++){
+        vert[i].x += x;
+        vert[i].y += y;
+    }
+}
+
+void Application::createGrid(float xMin, float yMin, float width, float height, unsigned int numberX, unsigned int numberY){
+    //unsigned int numberVertices = getNumberVertices();
+    for (unsigned int x = 0; x < numberX; x++){
+        for (unsigned int y = 0; y < numberY; y++){
+            copyPolygon(xMin + width * x, yMin + height * y, width, height);
+        }
+    }
 }

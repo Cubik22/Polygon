@@ -2,7 +2,6 @@
 #include "Logger.h"
 #include <iostream>
 
-
 void updatePressedClick(bool glPressed, bool& pressed, bool& click){
     if (glPressed){
         if (!pressed){
@@ -75,6 +74,8 @@ void Window::pollEvents() const{
 }
 
 void Window::processImput(){
+    bool glMouseRightPressed = glfwGetMouseButton(glWindow, GLFW_MOUSE_BUTTON_2) == GLFW_PRESS;
+    updatePressedClick(glMouseRightPressed, mouseRightPressed, mouseRightClick);
     bool glMouseLeftPressed = glfwGetMouseButton(glWindow, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS;
     updatePressedClick(glMouseLeftPressed, mouseLeftPressed, mouseLeftClick);
     bool glEnterPressed = glfwGetKey(glWindow, GLFW_KEY_ENTER) == GLFW_PRESS;
@@ -83,10 +84,22 @@ void Window::processImput(){
     updatePressedClick(glBackPressed, backPressed, backClick);
     bool glEscPressed = glfwGetKey(glWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS;
     updatePressedClick(glEscPressed, escPressed, escClick);
+    bool glUpPressed = glfwGetKey(glWindow, GLFW_KEY_UP) == GLFW_PRESS;
+    updatePressedClick(glUpPressed, upPressed, upClick);
+    bool glDownPressed = glfwGetKey(glWindow, GLFW_KEY_DOWN) == GLFW_PRESS;
+    updatePressedClick(glDownPressed, downPressed, downClick);
+    bool glRightPressed = glfwGetKey(glWindow, GLFW_KEY_RIGHT) == GLFW_PRESS;
+    updatePressedClick(glRightPressed, rightPressed, rightClick);
+    bool glLeftPressed = glfwGetKey(glWindow, GLFW_KEY_LEFT) == GLFW_PRESS;
+    updatePressedClick(glLeftPressed, leftPressed, leftClick);
 }
 
-bool Window::isLeftClick() const{
+bool Window::isMouseLeftClick() const{
     return mouseLeftClick;
+}
+
+bool Window::isMouseRightClick() const{
+    return mouseRightClick;
 }
 
 bool Window::isEnterClick() const{
@@ -99,6 +112,22 @@ bool Window::isBackClick() const{
 
 bool Window::isEscClick() const{
     return escClick;
+}
+
+bool Window::isUpClick() const{
+    return upClick;
+}
+
+bool Window::isDownClick() const{
+    return downClick;
+}
+
+bool Window::isRightClick() const{
+    return rightClick;
+}
+
+bool Window::isLeftClick() const{
+    return leftClick;
 }
 
 void Window::initiGLFW(){

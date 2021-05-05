@@ -27,6 +27,7 @@ public:
     void printIndices() const;
 
     void createNetwork();
+
     std::vector<std::vector<unsigned int>*> cut();
 
     static const double BIG_DOUBLE;

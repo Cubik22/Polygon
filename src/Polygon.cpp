@@ -5,20 +5,22 @@
 
 const double Polygon::BIG_DOUBLE = 1.0E+10;
 
-Polygon::Polygon(){}
+Polygon::Polygon() : startNode{nullptr} {}
 
 Polygon::Polygon(const std::vector<Vector2f> &_points, const std::vector<unsigned int> &_indices) :
-    points{_points}, indices{_indices}{
+    points{_points}, indices{_indices}, startNode{nullptr} {
     if (_points.size() != _indices.size()){
         throw std::runtime_error("Points vector and indices list should have the same size");
     }
 }
 
 Polygon::~Polygon(){
-    LOG(LogLevel::DEBUG) << "polygon deleted";
     if (startNode){
         Network::deleteNetwork(startNode);
+    } else{
+        LOG(LogLevel::DEBUG) << "Polygon was not cutted";
     }
+    LOG(LogLevel::DEBUG) << "Polygon deleted";
 }
 
 void Polygon::setBody(const std::vector<Vector2f> &_points, const std::vector<unsigned int> &_indices){
@@ -199,7 +201,7 @@ void Polygon::calculateOrientation(){
 
 const Node* Polygon::getNextIntersection(const Node *node){
     if (node->up == nullptr && node->down == nullptr){
-        LOG(LogLevel::WARN) << node->getIndex() << "returned nullptr from Polygon::getNextIntersection";
+        LOG(LogLevel::WARN) << node->getIndex() << " returned nullptr from Polygon::getNextIntersection";
         return nullptr;
     }
     if (node->up == nullptr){

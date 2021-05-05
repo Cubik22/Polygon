@@ -9,11 +9,60 @@
 #include <vector>
 
 
+enum class VerticesType{
+    Float,
+    Vector2f
+};
+
+enum class IndicesType{
+    UnsignedInt
+};
+
+enum class GeometricPrimitive{
+    Point,
+    Line,
+    LinePointOpen,
+    LinePointClosed,
+    Triangle,
+    Polygon
+};
+
+struct ShapeComposition{
+    const void* vertices =          nullptr;
+    const void* indices =           nullptr;
+    unsigned int numberVertices =   0;
+    unsigned int numberIndices =    0;
+    VerticesType verticesType =     VerticesType::Float;
+    IndicesType indicesType =       IndicesType::UnsignedInt;
+    GeometricPrimitive primitive =  GeometricPrimitive::Point;
+    float r =                       1.0;
+    float g =                       1.0;
+    float b =                       1.0;
+};
+
 class Shape{
 
 public:
+    Shape();
+    Shape(const void* vertices, const void* indices, unsigned int numberVertices, unsigned int numberIndices,
+          VerticesType verticesType, IndicesType indicesType, GeometricPrimitive primitive,
+          float r = 1.0, float g = 1.0, float b = 1.0);
+    Shape(const std::vector<Vector2f>& vertices, const std::vector<unsigned int>& indices,
+          GeometricPrimitive primitive, float r = 1.0, float g = 1.0, float b = 1.0);
+    Shape(const std::vector<Vector2f>& vertices, GeometricPrimitive primitive, float r = 1.0, float g = 1.0, float b = 1.0);
+    Shape(ShapeComposition composition);
+
     virtual ~Shape();
-    virtual void draw() const = 0;
+
+    virtual void draw() const;
+
+    GeometricPrimitive getPrimitive();
+
+    float getR() const;
+    float getG() const;
+    float getB() const;
+
+    std::vector<float> getRGB() const;
 
     static const unsigned int DIMENSIONS;
 
@@ -21,6 +70,13 @@ protected:
     IndexBuffer ib;
     VertexBuffer vb;
     VertexArray va;
+
+    GeometricPrimitive primitive;
+
+    // colors
+    float r;
+    float g;
+    float b;
 
     // load vertices whatever dimension
     void loadVertices(const std::vector<float>& vertices);
@@ -37,6 +93,10 @@ protected:
     void loadIndicesDefault(unsigned int size, bool open);
 
     void bindAll() const;
+
+private:
+    unsigned int getNumberGeometricPrimitive(GeometricPrimitive primitive);
+    //unsigned int getNumberIndicesOrder(IndicesOrder order);
 };
 
 // list of points, indices specify wich to choose from vertices
