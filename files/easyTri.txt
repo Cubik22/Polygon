@@ -1,0 +1,8 @@
+# number of vertices
+3
+# indices
+0 1 2
+# vertices
+0.00	0.00
+0.50	0.25
+0.25	0.50 

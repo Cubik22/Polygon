@@ -25,9 +25,24 @@ const std::vector<std::vector<unsigned int>*>& Element::createElement(){
         createBorderPolygon(node, node);
     } else{
         LOG(LogLevel::INFO) << "no border polygons created";
+        createMainPolygonUpdated(bottomLeft);
     }
 
-    LOG(LogLevel::INFO) << "element created";
+    LOG(LogLevel::DEBUG) << "element created";
+
+    LOG::NewLine(LogLevel::INFO);
+
+    unsigned int numberPolygonsIndices = polygonsIndices.size();
+    LOG(LogLevel::INFO) << "number of polygons: " << numberPolygonsIndices;
+    for (unsigned int i = 0; i < numberPolygonsIndices; i++){
+        std::vector<unsigned int>& ind = *polygonsIndices[i];
+        LOG l = LOG(LogLevel::INFO);
+        l << "poly " << i << ") ";
+        for (unsigned int j = 0; j < ind.size(); j++){
+            l << ind[j] << " ";
+        }
+    }
+
     return polygonsIndices;
 }
 
@@ -90,13 +105,13 @@ void Element::createBoundingBox(){
     }
 
 //    LDEB << "indicesLeft:";
-//    printArray(indicesLeft);
+//    printDebugArray(indicesLeft);
 //    LDEB << "indicesRight:";
-//    printArray(indicesRight);
+//    printDebugArray(indicesRight);
 //    LDEB << "indicesTop:";
-//    printArray(indicesTop);
+//    printDebugArray(indicesTop);
 //    LDEB << "indicesBottom:";
-//    printArray(indicesBottom);
+//    printDebugArray(indicesBottom);
 
     left    = vertices[indicesLeft[0]].x;
     right   = vertices[indicesRight[0]].x;
@@ -162,9 +177,6 @@ void Element::createBoundingBox(){
 void Element::addExtraPoints(){
     const std::vector<unsigned int>& indices = poly.getIndices();
 
-//    std::vector<unsigned int>* mainIndices = new std::vector<unsigned int>();
-//    polygonsIndices.push_back(mainIndices);
-
     Node* start = nullptr;
     Node* node = nullptr;
 
@@ -224,83 +236,23 @@ void Element::addExtraPoints(){
 
         const Vector2f vec = points[index];
         if (abs(vec.x - right) < Element::TOLERANCE){
-            LDEB << "try right";
             tryAdding({vec.x - width, vec.y}, bottomLeft, BACKWARD, BIGGER, Y_CONSIDER);
         } else if (abs(vec.x - left) < Element::TOLERANCE){
-            LDEB << "try left";
             tryAdding({vec.x + width, vec.y}, topRight, BACKWARD, SMALLER, Y_CONSIDER);
         } else if (abs(vec.y - top) < Element::TOLERANCE){
-            LDEB << "try top";
             tryAdding({vec.x, vec.y - height}, bottomLeft, FORWARD, BIGGER, X_CONSIDER);
         } else if (abs(vec.y - bottom) < Element::TOLERANCE){
-            LDEB << "try bottom";
             tryAdding({vec.x, vec.y + height}, topRight, FORWARD, SMALLER, X_CONSIDER);
         }
         node = node->up;
     } while (node != start);
 
-//    for (unsigned int i = 0; i < numberStartIndices; i++){
-//        unsigned int index = indices[i];
-////        mainIndices->push_back(index);
-//        bool isNotBorder = false;
-//        Node* tmp;
-//        if (index == bottomLeft->getIndex()){
-//            tmp = bottomLeft;
-//        } else if (index == bottomRight->getIndex()){
-//            tmp = bottomRight;
-//        } else if (index == topRight->getIndex()){
-//            tmp = topRight;
-//        } else if (index == topLeft->getIndex()){
-//            tmp = topLeft;
-//        } else{
-//            tmp = new Node(index);
-//            isNotBorder = true;
-//        }
-//        if (node != nullptr){
-//            node->up = tmp;
-//            tmp->down = node;
-//        } else{
-//            start = tmp;
-//        }
-//        node = tmp;
-//        if (!isNotBorder){
-//            continue;
-//        }
-//        const Vector2f vec = poly.getPoint(index);
-//        if (abs(vec.x - right) < Element::TOLERANCE){
-//            add(topRight, node, BACKWARD, SMALLER, Y_CONSIDER);
-//            points.push_back({vec.x - width, vec.y});
-//            Node* newNode = new Node(numberStartIndices + numberAddedVertices);
-//            newNode->touched = true;
-//            add(bottomLeft, newNode, BACKWARD, BIGGER, Y_CONSIDER);
-//            numberAddedVertices++;
-//        } else if (abs(vec.x - left) < Element::TOLERANCE){
-//            add(bottomLeft, node, BACKWARD, BIGGER, Y_CONSIDER);
-//            points.push_back({vec.x + width, vec.y});
-//            Node* newNode = new Node(numberStartIndices + numberAddedVertices);
-//            newNode->touched = true;
-//            add(topRight, newNode, BACKWARD, SMALLER, Y_CONSIDER);
-//            numberAddedVertices++;
-//        } else if (abs(vec.y - top) < Element::TOLERANCE){
-//            add(topRight, node, FORWARD, SMALLER, X_CONSIDER);
-//            points.push_back({vec.x, vec.y - height});
-//            Node* newNode = new Node(numberStartIndices + numberAddedVertices);
-//            newNode->touched = true;
-//            add(bottomLeft, newNode, FORWARD, BIGGER, X_CONSIDER);
-//            numberAddedVertices++;
-//        } else if (abs(vec.y - bottom) < Element::TOLERANCE){
-//            add(bottomLeft, node, FORWARD, BIGGER, X_CONSIDER);
-//            points.push_back({vec.x, vec.y + height});
-//            Node* newNode = new Node(numberStartIndices + numberAddedVertices);
-//            newNode->touched = true;
-//            add(topRight, newNode, FORWARD, SMALLER, X_CONSIDER);
-//            numberAddedVertices++;
-//        }
-//    }
-
-//    for (unsigned int i = 0; i < points.size(); i++){
-//        LDEB << i << " x: " << points[i].x << " y: " << points[i].y;
-    //    }
+    LOG::NewLine(LogLevel::INFO);
+    LOG(LogLevel::INFO) << "vertices after adding extra points";
+    for (unsigned int i = 0; i < points.size(); i++){
+        LOG(LogLevel::INFO) << i << " x: " << points[i].x << " y: " << points[i].y;
+    }
+    LOG::NewLine(LogLevel::INFO);
 }
 
 void Element::tryAdding(const Vector2f& vector, Node* start, bool forward, bool bigger, bool x){
@@ -372,15 +324,15 @@ void Element::tryAdding(const Vector2f& vector, Node* start, bool forward, bool 
         create->previous = node;
         node->next = create;
     }
-    if (!node->next->touched && !node->previous->touched &&
-        (abs(points[node->next->getIndex()].x - points[node->previous->getIndex()].x) < Element::TOLERANCE ||
-         abs(points[node->next->getIndex()].y - points[node->previous->getIndex()].y) < Element::TOLERANCE)){
-             node->previous->up = node;
-             node->down = node->previous;
-             node->up = node->next;
-             node->next->down = node;
+    if (!create->next->touched && !create->previous->touched &&
+        (abs(points[create->next->getIndex()].x - points[create->previous->getIndex()].x) < Element::TOLERANCE ||
+         abs(points[create->next->getIndex()].y - points[create->previous->getIndex()].y) < Element::TOLERANCE)){
+             create->previous->up = create;
+             create->down = create->previous;
+             create->up = create->next;
+             create->next->down = create;
     } else{
-        node->touched = true;
+        create->touched = true;
     }
 }
 
@@ -452,7 +404,6 @@ void Element::createMainPolygonUpdated(Node* start){
 
     Node* node = start;
     do{
-        LDEB << "up: " << node->getIndex();
         mainIndices->push_back(node->getIndex());
         node = node->up;
     } while (node != start);
@@ -463,9 +414,10 @@ void Element::createBorderPolygon(Node* start, Node* begin){
         LOG(LogLevel::ERROR) << start->getIndex() << " starting node is not part of the main polygon";
         return;
     }
+    LOG(LogLevel::INFO) << "begin node: " << begin->getIndex();
     LOG(LogLevel::INFO) << "start node: " << start->getIndex();
 
-    while (!start->next->touched){
+    while (start->next == start->up){
         LOG(LogLevel::INFO) << "at " << start->getIndex();
         start = start->next;
         if (start == begin){
@@ -481,10 +433,11 @@ void Element::createBorderPolygon(Node* start, Node* begin){
     borderPoly->push_back(start->getIndex());
 
     Node* node = start->next;
+    LOG(LogLevel::INFO) << "adding border nodes: " << node->getIndex();
     while (node->touched){
-        LOG(LogLevel::INFO) << "adding border nodes: " << node->getIndex();
         borderPoly->push_back(node->getIndex());
         node = node->next;
+        LOG(LogLevel::INFO) << "adding border nodes: " << node->getIndex();
     }
     borderPoly->push_back(node->getIndex());
 
@@ -493,9 +446,11 @@ void Element::createBorderPolygon(Node* start, Node* begin){
     }
 
     node = node->down;
+    LOG(LogLevel::INFO) << "adding nodes inside polygon: " << node->getIndex();
     while (node != start){
         borderPoly->push_back(node->getIndex());
         node = node->down;
+        LOG(LogLevel::INFO) << "adding nodes inside polygon: " << node->getIndex();
     }
 }
 
@@ -508,21 +463,17 @@ Node* Element::findStartNode(Node* start){
         }
     } else{
         while (node->next == nullptr){
-            LDEB << "prima parte: " << node->getIndex();
             node = node->up;
             if (node == start){
                 return nullptr;
             }
         }
-        LDEB << "fine prima parte: " << node->getIndex();
-        while (!node->previous->touched){
-            LDEB << "seconda parte: " << node->getIndex();
-            node = node->previous;
+        while (!node->next->touched && node->next == node->up){
+            node = node->next;
             if (node == start){
                 return nullptr;
             }
         }
-        LDEB << "fine seconda parte: " << node->getIndex();
     }
     return node;
 }
@@ -540,7 +491,7 @@ int Element::getOneEqual(const std::vector<unsigned int>& a, const std::vector<u
     return -1;
 }
 
-void Element::printArray(const std::vector<unsigned int>& a){
+void Element::printDebugArray(const std::vector<unsigned int>& a){
     unsigned int sizeA = a.size();
     LOG l = LOG(LogLevel::DEBUG);
     for (unsigned int i = 0; i < sizeA; i++){
