@@ -117,7 +117,8 @@ int Loader::LoadVerticesFromFile(std::vector<Vector2f>& vertices, std::vector<un
 }
 
 void Loader::SavePolygonToFile(const std::vector<Vector2f>& vertices, const std::vector<unsigned int>& indices,
-                               const std::vector<Vector2f>& segmentPoints, const std::vector<std::vector<unsigned int>*>& polygonsIndices,
+                               const std::vector<Vector2f>& segmentPoints,
+                               const std::vector<std::shared_ptr<std::vector<unsigned int>>>& polygonsIndices,
                                const std::string& fileName){
     LOG(LogLevel::INFO) << "Saving polygon to " << fileName;
     unsigned int numberVertices = vertices.size();
@@ -178,8 +179,8 @@ int Loader::GetNumberSmallPolygonsFromFile(const std::string& fileName){
     return numberSmallPolygons;
 }
 
-int Loader::LoadSmallPolygonsIndicesFromFile(std::vector<std::vector<unsigned int>*>& polygonsIndices, const std::string& fileName,
-                                             unsigned int numberSmallPolygons){
+int Loader::LoadSmallPolygonsIndicesFromFile(std::vector<std::shared_ptr<std::vector<unsigned int>>>& polygonsIndices,
+                                             const std::string& fileName, unsigned int numberSmallPolygons){
     if (numberSmallPolygons == 0){
         LOG(LogLevel::ERROR) << "number of small polygons should be a number greather than 0";
         return -2;
@@ -193,7 +194,7 @@ int Loader::LoadSmallPolygonsIndicesFromFile(std::vector<std::vector<unsigned in
     for (unsigned int i = 0; i < numberSmallPolygons; i++){
         getline(file, line);
         convert.str(line);
-        polygonsIndices.push_back(new std::vector<unsigned int>);
+        polygonsIndices.push_back(std::make_shared<std::vector<unsigned int>>());
         while ((convert >> index) && !convert.eof()){
             if (convert.fail()){
                 LOG(LogLevel::ERROR) << "problems when reading small polygons indices";
@@ -232,5 +233,3 @@ int Loader::OpenFileAndSearch(std::ifstream& file, const std::string fileName, c
     }
     return 1;
 }
-
-

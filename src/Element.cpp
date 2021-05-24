@@ -1,5 +1,6 @@
 #include "Element.h"
 #include "Logger.h"
+#include <exception>
 #include <math.h>
 
 #define FORWARD     true
@@ -9,10 +10,10 @@
 #define X_CONSIDER  true
 #define Y_CONSIDER  false
 
-Element::Element(const Polygon& _poly) : poly{_poly}, points{_poly.getPoints()},
+Element::Element(const Polygon& _poly) : points(_poly.getPoints()), vertices(_poly.getPoints()), indices(_poly.getIndices()),
     numberStartIndices{_poly.getNumberIndices()}, numberAddedVertices{0}, created{false} {}
 
-const std::vector<std::vector<unsigned int>*>& Element::createElement(){
+const std::vector<std::shared_ptr<std::vector<unsigned int>>>& Element::createElement(){
 //    LOG(LogLevel::DEBUG) << "started creating element";
     created = true;
     createBoundingBox();
@@ -46,25 +47,40 @@ const std::vector<std::vector<unsigned int>*>& Element::createElement(){
     return polygonsIndices;
 }
 
-const std::vector<Vector2f>& Element::getPoints(){
+const std::vector<Vector2f>& Element::getPoints() const{
     if (!created){
-        createElement();
+        throw std::runtime_error("Element not created when trying to get points");
     }
     return points;
 }
 
-const std::vector<std::vector<unsigned int>*>& Element::getPolygonsIndices(){
+const std::vector<std::shared_ptr<std::vector<unsigned int>>>& Element::getPolygonsIndices() const{
     if (!created){
-        return createElement();
+        throw std::runtime_error("Element not created when trying to get indices");
     }
     return polygonsIndices;
+}
+
+float Element::getWidth() const{
+    return width;
+}
+
+float Element::getHeight() const{
+    return height;
+}
+
+float Element::getXMin() const{
+    return xMin;
+}
+
+float Element::getYMin() const{
+    return yMin;
 }
 
 const double Element::TOLERANCE = 1.0E-4;
 
 void Element::createBoundingBox(){
-    const std::vector<Vector2f>& vertices = poly.getPoints();
-    const std::vector<unsigned int>& indices = poly.getIndices();
+    //const std::vector<Vector2f>& vertices = poi
 
     std::vector<unsigned int> indicesRight  = {0};
     std::vector<unsigned int> indicesLeft   = {0};
@@ -175,8 +191,6 @@ void Element::createBoundingBox(){
 }
 
 void Element::addExtraPoints(){
-    const std::vector<unsigned int>& indices = poly.getIndices();
-
     Node* start = nullptr;
     Node* node = nullptr;
 
@@ -399,7 +413,7 @@ void Element::add(Node* start, Node* create, bool forward, bool bigger, bool x){
 }
 
 void Element::createMainPolygonUpdated(Node* start){
-    std::vector<unsigned int>* mainIndices = new std::vector<unsigned int>();
+    std::shared_ptr<std::vector<unsigned int>> mainIndices = std::make_shared<std::vector<unsigned int>>();
     polygonsIndices.push_back(mainIndices);
 
     Node* node = start;
@@ -428,7 +442,7 @@ void Element::createBorderPolygon(Node* start, Node* begin){
 
     LOG(LogLevel::INFO) << "real starting node: " << start->getIndex();
 
-    std::vector<unsigned int>* borderPoly = new std::vector<unsigned int>();
+    std::shared_ptr<std::vector<unsigned int>> borderPoly = std::make_shared<std::vector<unsigned int>>();
     polygonsIndices.push_back(borderPoly);
     borderPoly->push_back(start->getIndex());
 

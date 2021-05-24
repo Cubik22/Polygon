@@ -5,6 +5,20 @@
 #include <vector>
 
 
+enum class RendColor{
+    Red         = 0,
+    Lime        = 1,
+    Blue        = 2,
+    Yellow      = 3,
+    Cyan        = 4,
+    Lemon       = 5,
+    Magenta     = 6,
+    RedDark     = 7,
+    Green       = 8,
+    BlueViolet  = 9,
+    PinkDeep    = 10
+};
+
 class Renderer{
 
 public:
@@ -17,6 +31,8 @@ public:
     void drawShapes() const;
     void clear() const;
 
+    unsigned int getNumberShapes() const;
+
     static bool PRINT_INFO;
 
     static void initGLEW();
@@ -24,6 +40,8 @@ public:
 
     static std::vector<float> getNextColor();
     static std::vector<float> getLastColor();
+
+    static std::vector<float> getColor(RendColor color);
 
 private:
     Shader shader;

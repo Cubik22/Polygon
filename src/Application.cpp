@@ -112,7 +112,7 @@ void Application::cutMainPolygon(){
     LOG(LogLevel::INFO) << "End of cutting";
 }
 
-const std::vector<std::vector<unsigned int>*>& Application::getPolygonsIndices() const{
+const std::vector<std::shared_ptr<std::vector<unsigned int>>>& Application::getPolygonsIndices() const{
     return polygonsIndices;
 }
 
@@ -149,7 +149,8 @@ void Application::printIndices() const{
 void Application::clear(){
     vertices.clear();
     indices.clear();
-    mainPolygon = Polygon();
+    //mainPolygon = Polygon();
+    mainPolygon.deleteStartNode();
     polygonsIndices.clear();
     segmentPoints.clear();
     verticesIndicesLoaded = false;

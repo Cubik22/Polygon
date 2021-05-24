@@ -28,7 +28,7 @@ public:
     const Polygon& getPolygon() const;
     void createMainPolygon();
     void cutMainPolygon();
-    const std::vector<std::vector<unsigned int>*>& getPolygonsIndices() const;
+    const std::vector<std::shared_ptr<std::vector<unsigned int>>>& getPolygonsIndices() const;
 
     void setVerticesIndicesLoaded();
     void setSegmentLoaded();
@@ -67,7 +67,7 @@ private:
     std::vector<unsigned int> indices;
     Polygon mainPolygon;
     std::vector<Vector2f> segmentPoints;
-    std::vector<std::vector<unsigned int>*> polygonsIndices;
+    std::vector<std::shared_ptr<std::vector<unsigned int>>> polygonsIndices;
 
     std::vector<Vector2f> boxVertices;
     std::vector<Vector2f> defaultVertices;

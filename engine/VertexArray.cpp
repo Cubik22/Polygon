@@ -59,5 +59,3 @@ void VertexArray::bind() const{
 void VertexArray::unbind() const{
     glBindVertexArray(0);
 }
-
-

@@ -5,10 +5,12 @@
 #include <iostream>
 
 enum class IntersectionType{
-    Parallel = 0,
-    OutsideSegment = 1,
-    InsideSegment = 2,
-    OnVertex = 3
+    Parallel        = 0,
+    OutsideSegment  = 1,
+    InsideSegment   = 2,
+    FirstOnVertex   = 3,
+    SecondOnVertex  = 4,
+    BothOnVertex    = 5
 };
 
 enum class RelativePosition{

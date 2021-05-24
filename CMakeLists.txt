@@ -75,6 +75,10 @@ list(APPEND source_code ${CMAKE_CURRENT_SOURCE_DIR}/src/Loader.cpp)
 list(APPEND source_code ${CMAKE_CURRENT_SOURCE_DIR}/src/Loader.h)
 list(APPEND source_code ${CMAKE_CURRENT_SOURCE_DIR}/src/Element.cpp)
 list(APPEND source_code ${CMAKE_CURRENT_SOURCE_DIR}/src/Element.h)
+list(APPEND source_code ${CMAKE_CURRENT_SOURCE_DIR}/src/Mesh.cpp)
+list(APPEND source_code ${CMAKE_CURRENT_SOURCE_DIR}/src/Mesh.h)
+list(APPEND source_code ${CMAKE_CURRENT_SOURCE_DIR}/src/Segment.cpp)
+list(APPEND source_code ${CMAKE_CURRENT_SOURCE_DIR}/src/Segment.h)
 
 # Add Unit Tests code
 #include_directories(${CMAKE_CURRENT_SOURCE_DIR}/test)

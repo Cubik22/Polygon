@@ -9,9 +9,13 @@ void Renderer::addShape(const Shape* shape){
     shapes.push_back(shape);
 }
 
-void Renderer::replaceShape(unsigned int position, const Shape *shape){
+void Renderer::replaceShape(unsigned int position, const Shape* shape){
     if (position < shapes.size()){
-        delete shapes[position];
+        if (shapes[position]){
+            delete shapes[position];
+        } else{
+            LOG(LogLevel::WARN) << "shape " << position << " was nullptr";
+        }
         shapes[position] = shape;
     } else{
         addShape(shape);
@@ -20,15 +24,18 @@ void Renderer::replaceShape(unsigned int position, const Shape *shape){
 
 void Renderer::removeLastShape(){
     if (shapes.size() > 0){
-        delete shapes[shapes.size() - 1];
+        if (shapes[shapes.size() - 1]){
+            delete shapes[shapes.size() - 1];
+        } else{
+            LOG(LogLevel::WARN) << "last shape " << shapes.size() - 1 << " was nullptr";
+        }
         shapes.pop_back();
     }
 }
 
 void Renderer::removeAllShapes(){
     while (shapes.size() > 0){
-        delete shapes[shapes.size() - 1];
-        shapes.pop_back();
+        removeLastShape();
     }
 }
 
@@ -36,8 +43,10 @@ void Renderer::drawShapes() const{
     shader.bind();
     for (unsigned int i = 0; i < shapes.size(); i++){
         const Shape* shape = shapes[i];
-//        unsigned int colorsSize = Colors.size();
-//        setPolygonColorRGB(Colors[(3 * i) % colorsSize], Colors[(3 * i + 1) % colorsSize], Colors[(3 * i + 2) % colorsSize]);
+        if (!shape || shape == nullptr){
+            LOG(LogLevel::DEBUG) << "shape " << i << " is nullptr";
+            continue;
+        }
         setPolygonColorFloat(shape->getRGB());
         shape->draw();
     }
@@ -45,6 +54,10 @@ void Renderer::drawShapes() const{
 
 void Renderer::clear() const{
     glClear(GL_COLOR_BUFFER_BIT);
+}
+
+unsigned int Renderer::getNumberShapes() const{
+    return shapes.size();
 }
 
 bool Renderer::PRINT_INFO = true;
@@ -93,9 +106,16 @@ std::vector<float> Renderer::getNextColor(){
 
 std::vector<float> Renderer::getLastColor(){
     unsigned int colorsSize = Colors.size();
-    return {Colors[(3 * Renderer::NumberColor) % colorsSize] / 255.0f,
+    return {Colors[(3 * Renderer::NumberColor)     % colorsSize] / 255.0f,
             Colors[(3 * Renderer::NumberColor + 1) % colorsSize] / 255.0f,
             Colors[(3 * Renderer::NumberColor + 2) % colorsSize] / 255.0f};
+}
+
+std::vector<float> Renderer::getColor(RendColor color){
+    unsigned int colorsSize = Colors.size();
+    return {Colors[(3 * (unsigned int)color)     % colorsSize] / 255.0f,
+            Colors[(3 * (unsigned int)color + 1) % colorsSize] / 255.0f,
+            Colors[(3 * (unsigned int)color + 2) % colorsSize] / 255.0f};
 }
 
 // PRIVATE
@@ -143,18 +163,23 @@ std::vector<unsigned int> Renderer::Colors = {
 };
 
 const char *Renderer::getVertexShader(){
-    return  "#version 330 core\n"
+    static const char* vertexShader =
+            "#version 330 core\n"
             "layout(location = 0) in vec2 position;\n"
             "void main(){\n"
             "   gl_PointSize = 5.0;\n"
             "   gl_Position = vec4(position, 0, 1);\n"
             "};";
+    return vertexShader;
 }
+
 const char *Renderer::getFragmentShader(){
-    return  "#version 330 core\n"
+    static const char* fragmentShader =
+            "#version 330 core\n"
             "layout(location = 0) out vec4 color;\n"
             "uniform vec4 u_Color;\n"
             "void main(){\n"
             "   color = u_Color;\n"
             "};";
+    return fragmentShader;
 }

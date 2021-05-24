@@ -4,11 +4,27 @@
 #include "Element.h"
 #include <fstream>
 
-Console::Console() : window{nullptr}, renderer{nullptr} {}
+Console::Console() : window{nullptr}, renderer{nullptr}, numberX(3), numberY(3), debug(false) {}
 
 Console::~Console() {
     // already terminated before
     //terminate();
+}
+
+void Console::setNumberX(unsigned int _numberX){
+    numberX = _numberX;
+}
+
+void Console::setNumberY(unsigned int _numberY){
+    numberY = _numberY;
+}
+
+void Console::setDebugMode(bool what){
+    debug = what;
+}
+
+void Console::setFileNameDebug(const char* name){
+    fileNameDebug = name;
 }
 
 void Console::start(){
@@ -18,24 +34,28 @@ void Console::start(){
         drawPolygon();
     }
     createPolygon();
-    createElement();
+    Element element = Element(app.getPolygon());
+    createElement(element);
+    createMesh(element);
 //    if (!app.isSegmentLoaded()){
 //        drawSegment();
 //    }
 //    drawCuttedPolygon();
-    //drawBox();
-    //moveAround();
+//    drawBox();
+//    moveAround();
     terminate();
-    askSaveToFile();
+    if (!debug){
+        askSaveToFile();
+    }
 }
 
 void Console::terminate(){
-    if (renderer != nullptr){
-        delete renderer;
-    }
-    if (window != nullptr){
-        delete window;
-    }
+//    if (renderer != nullptr){
+//        delete renderer;
+//    }
+//    if (window != nullptr){
+//        delete window;
+//    }
     Window::terminateGLFW();
 }
 
@@ -71,11 +91,19 @@ void Console::askLoadFromFile(){
     while (continueLoop){
         continueLoop = false;
         std::cout << "Do you want to load polygon from file? [y/N] ";
-        std::getline(std::cin, consoleString);
+        if (!debug){
+            std::getline(std::cin, consoleString);
+        } else{
+            consoleString = "y";
+        }
         if (consoleString == "y" || consoleString == "Y"){
             std::cout << "Enter the name of the file you what to load polygon from: ";
             std::string fileName;
-            std::getline(std::cin, fileName);
+            if (!debug){
+                std::getline(std::cin, fileName);
+            } else{
+                fileName = fileNameDebug;
+            }
             fileName = "files/" + fileName;
             int numberVertices = Loader::GetNumberVerticesFromFile(fileName);
             if (numberVertices <= 0){
@@ -91,7 +119,11 @@ void Console::askLoadFromFile(){
             if (Loader::SearchInFile(fileName, "indices", false) > 0){
                 LOG(LogLevel::INFO) << "Indices found";
                 std::cout << "Do you want to load indices? (If not it is assumed that vertices are in order) [Y/n] ";
-                std::getline(std::cin, consoleString);
+                if (!debug){
+                    std::getline(std::cin, consoleString);
+                } else{
+                    consoleString = "y";
+                }
                 if (consoleString == "n" || consoleString == "N"){
                     if (Loader::LoadVerticesFromFile(app.getVerticesForLoading(), app.getIndicesForLoading(),
                                                      fileName, numberVertices, false) < 0){
@@ -140,12 +172,12 @@ void Console::askLoadFromFile(){
 void Console::initWindowAndLibraries(){
     Window::initiGLFW();
 
-    window = new Window("Polygon", WIDTH, HEIGHT);
+    window = std::make_unique<Window>("Polygon", WIDTH, HEIGHT);
 
     Renderer::PRINT_INFO = false;
     Renderer::initGLEW();
 
-    renderer = new Renderer();
+    renderer = std::make_unique<Renderer>();
 
     LOG::NewLine(LogLevel::INFO);
 }
@@ -247,7 +279,7 @@ void Console::drawCuttedPolygon(){
     renderer->removeLastShape();
     renderer->removeLastShape();
     app.cutMainPolygon();
-    const std::vector<std::vector<unsigned int>*>& polygonsIndices = app.getPolygonsIndices();
+    const std::vector<std::shared_ptr<std::vector<unsigned int>>>& polygonsIndices = app.getPolygonsIndices();
 
     LOG::NewLine(LogLevel::INFO);
     LOG(LogLevel::INFO) << "Number of polygons: " << polygonsIndices.size();
@@ -372,14 +404,13 @@ void Console::moveAround(){
     }
 }
 
-void Console::createElement(){
+void Console::createElement(Element& element){
     renderer->removeAllShapes();
 
-    Element element = Element(app.getPolygon());
     element.createElement();
 
     const std::vector<Vector2f>& points = element.getPoints();
-    const std::vector<std::vector<unsigned int>*>& polygonsIndices = element.getPolygonsIndices();
+    const std::vector<std::shared_ptr<std::vector<unsigned int>>>& polygonsIndices = element.getPolygonsIndices();
 
     for (unsigned int i = 0; i < polygonsIndices.size(); i++){
         const std::vector<unsigned int>& indices = *polygonsIndices[i];
@@ -389,6 +420,67 @@ void Console::createElement(){
         Shape* shapeNuova = new Shape(points, indices, GeometricPrimitive::LinePointClosed,
                                       color[0], color[1], color[2]);
         renderer->addShape(shapeNuova);
+    }
+
+    if (!debug){
+        drawNoInput();
+    }
+}
+
+void Console::createMesh(Element& element){
+    renderer->removeAllShapes();
+
+    float thick = 0.2;
+    const std::vector<Vector2f> verticesBorder = {
+        {0.0, -1 + thick}, {1 - thick, 0.0}, {0.0, 1 - thick}, {-1 + thick, 0.0}
+    };
+    std::vector<float> color = Renderer::getColor(RendColor::Yellow);
+    Shape* shapeNuova = new Shape(verticesBorder, GeometricPrimitive::LinePointClosed,
+                                  color[0], color[1], color[2]);
+    renderer->addShape(shapeNuova);
+
+//    unsigned int numberX = 2;
+//    unsigned int numberY = 2;
+    Mesh mesh = Mesh(element, verticesBorder, numberX, numberY);
+
+    const std::vector<std::shared_ptr<std::vector<unsigned int>>>& indices = mesh.getIndices();
+    unsigned int numberPolygons = mesh.getNumberPolygons();
+
+    for (unsigned int x = 0; x < numberX; x++){
+        for (unsigned int y = 0; y < numberY; y++){
+            const std::vector<Vector2f>& vertices = mesh.getVertices(x, y);
+            std::vector<float> nextColor = Renderer::getNextColor();
+            for (unsigned int i = 0; i < numberPolygons; i++){
+                Shape* shapeNuova = new Shape(vertices, *indices[i], GeometricPrimitive::LinePointClosed,
+                                              nextColor[0], nextColor[1], nextColor[2]);
+                renderer->addShape(shapeNuova);
+            }
+        }
+    }
+    drawNoInput();
+    while (renderer->getNumberShapes() > 1){
+        renderer->removeLastShape();
+    }
+
+    std::vector<float> colorInside = Renderer::getColor(RendColor::Green);
+    std::vector<float> colorOutside = Renderer::getColor(RendColor::Red);
+
+    std::vector<IndicesElement> indicesElement = mesh.cut();
+
+    for (unsigned int i = 0; i < indicesElement.size(); i++){
+        const std::vector<Vector2f>& vertices = mesh.getVertices(i);
+        const std::vector<std::shared_ptr<std::vector<unsigned int>>>& insideIndices = *indicesElement[i].indicesInside;
+        const std::vector<std::shared_ptr<std::vector<unsigned int>>>& outsideIndices = *indicesElement[i].indicesOutside;
+        for (unsigned int n = 0; n < insideIndices.size(); n++){
+            Shape* shapeNuova = new Shape(vertices, *insideIndices[n], GeometricPrimitive::LinePointClosed,
+                                          colorInside[0], colorInside[1], colorInside[2]);
+            renderer->addShape(shapeNuova);
+        }
+        for (unsigned int n = 0; n < outsideIndices.size(); n++){
+            Shape* shapeNuova = new Shape(vertices, *outsideIndices[n], GeometricPrimitive::LinePointClosed,
+                                          colorOutside[0], colorOutside[1], colorOutside[2]);
+            renderer->addShape(shapeNuova);
+        }
     }
 
     drawNoInput();

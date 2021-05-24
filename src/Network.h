@@ -2,6 +2,8 @@
 #define NETWORK_H
 
 #include <vector>
+#include "Logger.h"
+
 
 enum class NodeType{
     // dot product is positive
@@ -28,17 +30,11 @@ public:
 
     unsigned int getIndex() const;
 
+    static void PrintNetwork(const Node* start, LogLevel level = LogLevel::INFO);
+    static void DeleteNetwork(Node* start);
+
 private:
     unsigned int index;
-};
-
-class Network{
-
-public:
-    Network();
-
-    static void printNetwork(const Node* start);
-    static void deleteNetwork(Node* start);
 };
 
 #endif // NETWORK_H

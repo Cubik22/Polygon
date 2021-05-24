@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <vector>
+#include <memory>
 
 #include "Vector2f.h"
 
@@ -24,14 +25,15 @@ public:
                                     const std::string& fileName, unsigned int numberVertices, bool loadIndices = false);
     // saves polygon to file (relative path is from the exectuable)
     static void SavePolygonToFile(const std::vector<Vector2f>& vertices, const std::vector<unsigned int>& indices,
-                                  const std::vector<Vector2f>& segmentPoints, const std::vector<std::vector<unsigned int>*>& polygonsIndices,
+                                  const std::vector<Vector2f>& segmentPoints,
+                                  const std::vector<std::shared_ptr<std::vector<unsigned int>>>& polygonsIndices,
                                   const std::string& fileName);
 
     // return: positve number if read succesfuly a positive number, 0 or negative if number is negative or some error occurred
     static int GetNumberSmallPolygonsFromFile(const std::string& fileName);
 
     // return: positve number if read succesfuly a positive number, 0 or negative if number is negative or some error occurred
-    static int LoadSmallPolygonsIndicesFromFile(std::vector<std::vector<unsigned int>*>& polygonsIndices,
+    static int LoadSmallPolygonsIndicesFromFile(std::vector<std::shared_ptr<std::vector<unsigned int>>>& polygonsIndices,
                                                const std::string& fileName, unsigned int numberSmallPolygons);
 
 private:

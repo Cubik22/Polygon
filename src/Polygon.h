@@ -2,6 +2,8 @@
 #define POLYGON_H
 
 #include <vector>
+#include <memory>
+#include "Logger.h"
 #include "Intersector.h"
 #include "Network.h"
 
@@ -13,6 +15,11 @@ public:
     Polygon(const std::vector<Vector2f>& _points, const std::vector<unsigned int>& _indices);
     ~Polygon();
 
+    Polygon(const Polygon&)                 = delete;
+    Polygon(Polygon&&)                      = delete;
+    Polygon& operator=(const Polygon&)      = delete;
+    Polygon& operator=(Polygon&&) noexcept  = delete;
+
     void setBody(const std::vector<Vector2f>& _points, const std::vector<unsigned int>& _indices);
     void setSegment(const Vector2f& _p1, const Vector2f& _p2);
 
@@ -23,28 +30,60 @@ public:
     unsigned int getNumberIndices() const;
     const Node* getStartNode() const;
     unsigned int getNumberIntersections() const;
-    void printVertices() const;
-    void printIndices() const;
+
+    void printVertices(LogLevel level = LogLevel::INFO) const;
+    void printIndices(LogLevel level = LogLevel::INFO) const;
+    void printNetwork(LogLevel level = LogLevel::INFO) const;
+    void printNetworkWithCoordinates(LogLevel level = LogLevel::INFO) const;
 
     void createNetwork();
 
-    std::vector<std::vector<unsigned int>*> cut();
+    void createNetworkMesh(std::vector<Vector2f>& extraPoint);
+
+    void deleteStartNode();
+
+    std::vector<std::shared_ptr<std::vector<unsigned int>>> cut();
+
+    void cutIndices(std::vector<std::shared_ptr<std::vector<unsigned int>>>& polygonsIndices);
+
+    void cutInsideOutside(std::vector<std::shared_ptr<std::vector<unsigned int>>>& insideIndices,
+                          std::vector<std::shared_ptr<std::vector<unsigned int>>>& outsideIndices);
+
+    float getWidth() const;
+    float getHeight() const;
+    float getXMin() const;
+    float getYMin() const;
+
+    // this function calculate the polygon area using Gauss
+    float calculateArea() const;
 
     static const double BIG_DOUBLE;
+
+    static std::vector<Vector2f> translateVertices(const std::vector<Vector2f>& vertices, float diffX, float diffY);
+    static std::shared_ptr<std::vector<Vector2f>> translateVerticesPointer(const std::vector<Vector2f>& vertices, float diffX, float diffY);
+
+    static void createBoundingBoxVariables(const std::vector<Vector2f>& vertices, float& width, float& height, float& xMin, float& yMin);
 
 private:
     std::vector<Vector2f> points;
     std::vector<unsigned int> indices;
     Node* startNode;
+    Node* firstNode;
     RelativePosition orientation;
     Vector2f p1;
     Vector2f p2;
     unsigned int numberIntersections;
 
+    float width;
+    float height;
+    float xMin;
+    float yMin;
+
     // this function calculate the relative orientation of the polygon with the segment
     // it is used in getNextIntersection to, given an intersection node, find wich one of the two intersection nodes closer (up and down)
     // can be reached with a line inside the segment
     void calculateOrientation();
+    //RelativePosition calculateOrientationFromNode(Node* node);
     // as stated before, this function only takes intersection nodes as input
     const Node* getNextIntersection(const Node* node);
     // this function is used to order the intersection nodes, from the one the segment touches last to the one it touches first
@@ -60,7 +99,13 @@ private:
     // the last one is the reference to the array of indices of all small polygon, so when a new small polygon is created
     // we can add his new array of indices to the big array of arrays
     void continueSmallPolygon(const Node* node, const Node* initialNode, RelativePosition relativePosition,
-                              std::vector<unsigned int>& indicesPoli, std::vector<std::vector<unsigned int>*>& polygonsIndices);
+                              std::vector<unsigned int>& indicesPoli,
+                              std::vector<std::shared_ptr<std::vector<unsigned int>>>& polygonsIndices);
+
+    void continueSmallPolygonInsideOutside(const Node* node, const Node* initialNode,
+        RelativePosition relativePosition, std::shared_ptr<std::vector<unsigned int>> indicesPoli,
+        std::vector<std::shared_ptr<std::vector<unsigned int>>>& insidePolygonsIndices,
+        std::vector<std::shared_ptr<std::vector<unsigned int>>>& outsidePolygonsIndices);
 };
 
 #endif //POLYGON_H

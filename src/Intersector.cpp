@@ -63,28 +63,47 @@ IntersectionType Intersector::calculateIntersection(bool isFirstLine, bool isSec
     if (abs(determinant) > toleranceParallelism){
         intersectionPoint.x = (b2 * c1 - b1 * c2) / determinant;
         intersectionPoint.y = (a1 * c2 - a2 * c1) / determinant;
-        double toleranceSquared = toleranceOnVertex * toleranceOnVertex;
-        if (!isFirstLine){
-            Vector2f difference1 = intersectionPoint - r1;
-            Vector2f difference2 = intersectionPoint - r2;
-            if (difference1.normSquared() < toleranceSquared || difference2.normSquared() < toleranceSquared){
-                intersectionType = IntersectionType::OnVertex;
-                return intersectionType;
-            }
-            if (difference1.x * difference2.x + difference1.y * difference2.y > toleranceOnVertex){
+        double toleranceVertexSquared = toleranceOnVertex * toleranceOnVertex;
+        Vector2f differencer1 = intersectionPoint - r1;
+        Vector2f differencer2 = intersectionPoint - r2;
+        Vector2f differences1 = intersectionPoint - s1;
+        Vector2f differences2 = intersectionPoint - s2;
+
+        bool firstOnSegment = differencer1.normSquared() < toleranceVertexSquared || differencer2.normSquared() < toleranceVertexSquared;
+        bool secondOnSegment = differences1.normSquared() < toleranceVertexSquared || differences2.normSquared() < toleranceVertexSquared;
+
+        if (!isFirstLine && isSecondLine){
+            if (differencer1.x * differencer2.x + differencer1.y * differencer2.y > toleranceOnVertex){
                 intersectionType = IntersectionType::OutsideSegment;
                 return intersectionType;
             }
-        }
-        if (!isSecondLine){
-            Vector2f difference1 = intersectionPoint - s1;
-            Vector2f difference2 = intersectionPoint - s2;
-            if (difference1.normSquared() < toleranceSquared || difference2.normSquared() < toleranceSquared){
-                intersectionType = IntersectionType::OnVertex;
+            if (firstOnSegment){
+                intersectionType = IntersectionType::FirstOnVertex;
                 return intersectionType;
             }
-            if (difference1.x * difference2.x + difference1.y * difference2.y > toleranceOnVertex){
+        } else if (!isSecondLine && isFirstLine){
+            if (differences1.x * differences2.x + differences1.y * differences2.y > toleranceOnVertex){
                 intersectionType = IntersectionType::OutsideSegment;
+                return intersectionType;
+            }
+            if (secondOnSegment){
+                intersectionType = IntersectionType::SecondOnVertex;
+                return intersectionType;
+            }
+        } else if (!isFirstLine && !isSecondLine){
+            if ((differences1.x * differences2.x + differences1.y * differences2.y > toleranceOnVertex) ||
+                (differencer1.x * differencer2.x + differencer1.y * differencer2.y > toleranceOnVertex)){
+                intersectionType = IntersectionType::OutsideSegment;
+                return intersectionType;
+            }
+            if (firstOnSegment && secondOnSegment){
+                intersectionType = IntersectionType::BothOnVertex;
+                return intersectionType;
+            } else if (firstOnSegment){
+                intersectionType = IntersectionType::FirstOnVertex;
+                return intersectionType;
+            } else if (secondOnSegment){
+                intersectionType = IntersectionType::SecondOnVertex;
                 return intersectionType;
             }
         }

@@ -1,5 +1,4 @@
 #include "Network.h"
-#include "Logger.h"
 #include <iostream>
 
 Node::Node(unsigned int _index) : touched{false}, next{nullptr}, previous{nullptr}, up{nullptr}, down{nullptr}, index{_index} {}
@@ -10,9 +9,7 @@ unsigned int Node::getIndex() const{
     return index;
 }
 
-Network::Network() {}
-
-void Network::printNetwork(const Node* start){
+void Node::PrintNetwork(const Node* start, LogLevel level){
     const Node* node = start;
     unsigned int i = 0;
     do{
@@ -20,12 +17,12 @@ void Network::printNetwork(const Node* start){
             LOG(LogLevel::WARN) << i << ": is nullptr";
             return;
         }
-        LOG(LogLevel::INFO) << i++ << ": " << node->getIndex();
+        LOG(level) << i++ << ": " << node->getIndex();
         node = node->next;
     } while (node != start);
 }
 
-void Network::deleteNetwork(Node *start){
+void Node::DeleteNetwork(Node *start){
     Node* node;
     Node* tmp;
     if (start != nullptr){
@@ -36,6 +33,8 @@ void Network::deleteNetwork(Node *start){
     }
     while (node != start){
         //LOG(LogLevel::DEBUG) << "deleted";
+
+
         tmp = node->next;
         delete node;
         node = tmp;

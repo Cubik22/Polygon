@@ -4,22 +4,30 @@
 #include "Polygon.h"
 #include "Network.h"
 
+
 class Element{
 
 public:
     Element(const Polygon& _poly);
 
-    const std::vector<std::vector<unsigned int>*>& createElement();
+    const std::vector<std::shared_ptr<std::vector<unsigned int>>>& createElement();
 
-    const std::vector<Vector2f>& getPoints();
-    const std::vector<std::vector<unsigned int>*>& getPolygonsIndices();
+    const std::vector<Vector2f>& getPoints() const;
+    const std::vector<std::shared_ptr<std::vector<unsigned int>>>& getPolygonsIndices() const;
+
+    float getWidth() const;
+    float getHeight() const;
+
+    float getXMin() const;
+    float getYMin() const;
 
     static const double TOLERANCE;
 
 private:
-    Polygon poly;
     std::vector<Vector2f> points;
-    std::vector<std::vector<unsigned int>*> polygonsIndices;
+    std::vector<Vector2f> vertices;
+    std::vector<unsigned int> indices;
+    std::vector<std::shared_ptr<std::vector<unsigned int>>> polygonsIndices;
 
     unsigned int numberStartIndices;
     unsigned int numberAddedVertices;
@@ -30,6 +38,7 @@ private:
     float bottom;
     float right;
     float left;
+
     float width;
     float height;
     float xMin;

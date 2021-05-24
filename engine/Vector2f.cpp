@@ -36,8 +36,8 @@ double Vector2f::normSquared() const{
 
 const double Vector2f::TOLERANCE = 1.0E-7;
 
-bool Vector2f::AreDoublesEqual(double a, double b){
-    return abs(a - b) < Vector2f::TOLERANCE;
+bool Vector2f::AreDoublesEqual(double a, double b, double tolerance){
+    return abs(a - b) < tolerance;
 }
 
 std::ostream& operator<< (std::ostream& ostrem, const Vector2f& point){
