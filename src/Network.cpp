@@ -9,6 +9,10 @@ unsigned int Node::getIndex() const{
     return index;
 }
 
+bool Node::isIntersection() const{
+    return (up || down || up != nullptr || down != nullptr);
+}
+
 void Node::PrintNetwork(const Node* start, LogLevel level){
     const Node* node = start;
     unsigned int i = 0;

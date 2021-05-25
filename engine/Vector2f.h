@@ -10,7 +10,7 @@ public:
     float x;
     float y;
 
-    Vector2f() {}
+    Vector2f();
     Vector2f(float _x, float _y);
     Vector2f(const Vector2f& copy);
     bool operator==(const Vector2f& equal) const;

@@ -7,11 +7,11 @@
 Polygon::Polygon() : startNode{nullptr} {}
 
 Polygon::Polygon(const std::vector<Vector2f>& _points, const std::vector<unsigned int>& _indices) :
-    points{_points}, indices{_indices}, startNode{nullptr} {
-//    if (_points.size() != _indices.size()){
-//        throw std::runtime_error("Points vector and indices list should have the same size");
-//    }
+    points(_points), indices(_indices), startNode(nullptr) {
+
     Polygon::createBoundingBoxVariables(points, width, height, xMin, yMin);
+
+    checkEnoughPointIndices();
 }
 
 Polygon::~Polygon(){
@@ -19,22 +19,22 @@ Polygon::~Polygon(){
 }
 
 void Polygon::setBody(const std::vector<Vector2f>& _points, const std::vector<unsigned int>& _indices){
-//    if (_points.size() != _indices.size()){
-//        throw std::runtime_error("Points vector and indices list should have the same size");
-//    }
     points = _points;
     indices = _indices;
     Polygon::createBoundingBoxVariables(points, width, height, xMin, yMin);
+
+    checkEnoughPointIndices();
 }
 
-void Polygon::setSegment(const Vector2f &_p1, const Vector2f &_p2){
+void Polygon::setSegment(const Vector2f& _p1, const Vector2f& _p2){
     p1 = _p1;
     p2 = _p2;
 }
 
 const Vector2f& Polygon::getPoint(unsigned int index) const{
     if (index >= getNumberIndices()){
-        throw std::runtime_error("Array out of bound");
+        LOG(LogLevel::ERROR) << "Polygon::getPoint: Array out of bound, returned point(0) instead";
+        return points[0];
     }
     return points[index];
 }
@@ -93,17 +93,12 @@ void Polygon::printNetworkWithCoordinates(LogLevel level) const{
             return;
         }
         unsigned int index = node->getIndex();
-        LOG(level) << i++ << ": " << index << " x: " << points[index].x + 0.8 << " y: " << points[index].y + 0.8;
+        LOG(level) << i++ << ": " << index << " x: " << points[index].x << " y: " << points[index].y;
         node = node->next;
     } while (node != start);
 }
 
 void Polygon::createNetwork(){
-    unsigned int numberIndices = getNumberIndices();
-    if (numberIndices == 0){
-        LOG(LogLevel::ERROR) << "number of indices is 0";
-        return;
-    }
     // stores the intersection Nodes in order to sort them after
     std::vector<Node*> unorderedIntersectionNodes;
     // intersector is used to find intersection points
@@ -129,6 +124,8 @@ void Polygon::createNetwork(){
     // this stores the pointer to the previous node se we can connect it with the new one
     Node* previous = nullptr;
 
+    unsigned int numberIndices = getNumberIndices();
+
     for (unsigned int i = 0; i < numberIndices; i++){
         node = new Node(indices[i]);
         // previous will be nullptr just the first time
@@ -136,7 +133,7 @@ void Polygon::createNetwork(){
             node->previous = previous;
             previous->next = node;
         } else{
-            //std::cout << "first node setted\n";
+            //LOG(LogLevel::DEBUG) << "first node setted";
             firstNode = node;
         }
         // here we set previous to node beacuse in the next iteration will be previous
@@ -170,7 +167,7 @@ void Polygon::createNetwork(){
             }
         }
     }
-    //std::cout << "end loop\n";
+
     if (firstNode == nullptr){
         LOG(LogLevel::ERROR) << "first node is nullptr";
         return;
@@ -201,11 +198,7 @@ void Polygon::createNetworkMesh(std::vector<Vector2f>& extraPoint){
     if (extraPoint.size() != points.size()){
         LOG(LogLevel::WARN) << "points and extra points do not have the same size";
     }
-    unsigned int numberIndices = getNumberIndices();
-    if (numberIndices == 0){
-        LOG(LogLevel::ERROR) << "number of indices is 0";
-        return;
-    }
+
     // stores the intersection Nodes in order to sort them after
     std::vector<Node*> unorderedIntersectionNodes;
     // intersector is used to find intersection points
@@ -231,10 +224,13 @@ void Polygon::createNetworkMesh(std::vector<Vector2f>& extraPoint){
     // this stores the pointer to the previous node se we can connect it with the new one
     Node* previous = nullptr;
 
-    Node* firstIntersection = nullptr;
-
-    //bool previousVertex = false;
+    // we store the node that could be intersection on vertex
+    // this has to be done because when we find an intersection on vertex, it could be on the first or the second vertex
+    // so we add the two vertices to this list of possible vertices then at the end we look for vertices whose previous's up are themselves
+    // that is if the vertex before on the list point to the specific vertex then we know this last one is an intersection point
     std::vector<Node*> possibleOnVertex;
+
+    unsigned int numberIndices = getNumberIndices();
 
     for (unsigned int i = 0; i < numberIndices; i++){
         node = new Node(indices[i]);
@@ -243,7 +239,7 @@ void Polygon::createNetworkMesh(std::vector<Vector2f>& extraPoint){
             node->previous = previous;
             previous->next = node;
         } else{
-            //std::cout << "first node setted\n";
+
             firstNode = node;
         }
         // here we set previous to node beacuse in the next iteration will be previous
@@ -252,21 +248,20 @@ void Polygon::createNetworkMesh(std::vector<Vector2f>& extraPoint){
         inter.setSegment2(points[indices[i]], points[indices[(i + 1) % numberIndices]]);
         IntersectionType intersectionType = inter.calculateIntersection(true, false);
 
+        // we separete the two cases when the intersection point is inside the segement
+        // (if it is inside the segment but on the vertex of the segment intended as line intersection point is FirstOnVertex)
         bool isInsideSegment = intersectionType == IntersectionType::InsideSegment || intersectionType == IntersectionType::FirstOnVertex;
         bool isOnVertex = intersectionType == IntersectionType::BothOnVertex || intersectionType == IntersectionType::SecondOnVertex;
 
-//        if (isOnVertex){
-//          std::cout << "from " << indices[i] << " to " << indices[(i + 1) % numberIndices] << " is on vertex\n";
-//        }
-
         if (isInsideSegment){
-//            std::cout << "intersection inside\n";
+            // if it is inside the segment we search if the intersection point is already in the points
+            // if it is we create a new Node pointing to that point, else we create also a new point
+
             const Vector2f intersectionPoint = inter.getIntersectionPoint();
 
             bool found = false;
             for (unsigned int l = 0; l < points.size(); l++){
                 if ((intersectionPoint - points[l]).normSquared() < Vector2f::TOLERANCE){
-                    //std::cout << "found equal\n";
                     node = new Node(l);
                     found = true;
                     break;
@@ -285,15 +280,9 @@ void Polygon::createNetworkMesh(std::vector<Vector2f>& extraPoint){
             previous->next = node;
             previous = node;
 
-            // index of last point before intersection was numberIndices - 1 so the first intersection node starts from numberIndices
-            //node = new Node(numberIndices + numberIntersections);
             // we add the new node found to the list of unordered intersection nodes
             unorderedIntersectionNodes.push_back(node);
             numberIntersections++;
-
-            if (firstIntersection == nullptr){
-                firstIntersection = node;
-            }
 
             // here is calculated the dot product in order to find the most outer intersection node
             double product = segment.dot(points[node->getIndex()] - p1);
@@ -303,15 +292,9 @@ void Polygon::createNetworkMesh(std::vector<Vector2f>& extraPoint){
             }
         } else if (isOnVertex){
             possibleOnVertex.push_back(node);
-
         }
-//        if (previousVertex && isOnVertex){
-//            previousVertex = false;
-//        } else if (!previousVertex && isOnVertex){
-//            previousVertex = true;
-//        }
     }
-    //std::cout << "end loop\n";
+
     if (firstNode == nullptr){
         LOG(LogLevel::ERROR) << "first node is nullptr";
         return;
@@ -336,6 +319,7 @@ void Polygon::createNetworkMesh(std::vector<Vector2f>& extraPoint){
         }
     }
 
+    // orientation has to be set to positive because this mode only support anti-clock wise indices
     orientation = RelativePosition::Positive;
 
     // here we handle the case where there are no intersections
@@ -349,6 +333,8 @@ void Polygon::createNetworkMesh(std::vector<Vector2f>& extraPoint){
         LOG(LogLevel::INFO) << "No intersections";
         startNode = firstNode;
     } else if (numberIntersections == 1){
+        // sometimes it happens that there is only one intersection, specifically when the points and indices are manually entered
+        // this happens when the segment is tangent to the poligon, this case is handled as in the case when there are no intersections
         LOG(LogLevel::WARN) << "1 intersection";
         startNode = firstNode;
         numberIntersections = 0;
@@ -374,7 +360,7 @@ std::vector<std::shared_ptr<std::vector<unsigned int>>> Polygon::cut(){
         LOG(LogLevel::INFO) << startNode->getIndex() << " starting the cut";
         polygonsIndices.push_back(std::make_shared<std::vector<unsigned int>>());
         std::vector<unsigned int>& indicesPoliCreation = *polygonsIndices[0];
-        continueSmallPolygon(startNode, startNode, RelativePosition::Parallel, indicesPoliCreation, polygonsIndices);
+        continueSmallPolygon(startNode, startNode, indicesPoliCreation, polygonsIndices);
     } else{
         polygonsIndices.push_back(std::make_shared<std::vector<unsigned int>>(indices));
     }
@@ -387,7 +373,7 @@ void Polygon::cutIndices(std::vector<std::shared_ptr<std::vector<unsigned int>>>
         LOG(LogLevel::INFO) << startNode->getIndex() << " starting the cut";
         polygonsIndices.push_back(std::make_shared<std::vector<unsigned int>>());
         std::vector<unsigned int>& indicesPoliCreation = *polygonsIndices[polygonsIndices.size() - 1];
-        continueSmallPolygon(startNode, startNode, RelativePosition::Parallel, indicesPoliCreation, polygonsIndices);
+        continueSmallPolygon(startNode, startNode, indicesPoliCreation, polygonsIndices);
     } else{
         polygonsIndices.push_back(std::make_shared<std::vector<unsigned int>>(indices));
     }
@@ -519,6 +505,16 @@ void Polygon::createBoundingBoxVariables(const std::vector<Vector2f>& vertices, 
 
 // PRIVATE
 
+void Polygon::checkEnoughPointIndices() const{
+    if (points.size() < 2){
+        LOG(LogLevel::ERROR) << "number of points is less than 2";
+    }
+
+    if (indices.size() < 2){
+        LOG(LogLevel::ERROR) << "number of indices is less than 2";
+    }
+}
+
 // TODO: when is parallel try with next two
 void Polygon::calculateOrientation(){
     Intersector inter;
@@ -535,7 +531,7 @@ void Polygon::calculateOrientation(){
 }
 
 const Node* Polygon::getNextIntersection(const Node *node){
-    if (node->up == nullptr && node->down == nullptr){
+    if (!node->isIntersection()){
         LOG(LogLevel::WARN) << node->getIndex() << " returned nullptr from Polygon::getNextIntersection";
         return nullptr;
     }
@@ -591,28 +587,18 @@ void Polygon::sortIntersectionsNetwork(const std::vector<Node*>& nodes){
     startNode->down = nullptr;
 }
 
-void Polygon::continueSmallPolygon(const Node* node, const Node* initialNode, RelativePosition relativePosition,
-                                   std::vector<unsigned int>& indicesPoli,
+void Polygon::continueSmallPolygon(const Node* node, const Node* initialNode, std::vector<unsigned int>& indicesPoli,
                                    std::vector<std::shared_ptr<std::vector<unsigned int>>>& polygonsIndices){
     // first we add the node we currently are at to the list of indices of the small polygon
     indicesPoli.push_back(node->getIndex());
     node = node->next;
-    // here we compute the intersection with the two points in order to find if we are arrived at an intersection point
-    Intersector inter;
-    inter.setSegment1(p1, points[node->getIndex()]);
-    inter.setSegment2(p2, points[node->getIndex()]);
-    // this check is used when the small polygon is just created and the relative position is parallel
-    // becuse we are starting from an intersection point, if we not change it we will never enter in the while loop
-    if (relativePosition == RelativePosition::Parallel){
-        relativePosition = inter.calculateRelativePosition();
-    }
-    // we loop until we arrive at an intersection point, so when the relative position becomes parallel
-    while (inter.calculateRelativePosition() == relativePosition) {
+
+    // we loop and add the nodes while we are not at an intersection node
+    while (!node->isIntersection()) {
         indicesPoli.push_back(node->getIndex());
         node = node->next;
-        inter.setSegment1(p1, points[node->getIndex()]);
-        inter.setSegment2(p2, points[node->getIndex()]);
     }
+
     LOG(LogLevel::INFO) << node->getIndex() << " arrived";
     // if the node we are arrived at is the starting node, we are finished, the small polygon is closed
     if (node != initialNode){
@@ -630,20 +616,21 @@ void Polygon::continueSmallPolygon(const Node* node, const Node* initialNode, Re
         if (node == initialNode){
             LOG(LogLevel::INFO) << node->getIndex() << " closing polygon";
         }
-        // sometimes getNextIntersection returns a nullptr, this happens very rarely when there are a lot of points and intersections
+        // in the past: sometimes getNextIntersection returns a nullptr, this happens very rarely when there are a lot of points and intersections
         // and intersector thinks that certain lines are parallel when in reality are not
+        // now it is solved because we no longer loop until relative position change but until we reach an intersection node
         if (node != nullptr && node != initialNode){
             node->touched = true;
             LOG(LogLevel::INFO) << node->getIndex() << " continue samll polygon";
             // first we continue the small polygon we are creating
-            continueSmallPolygon(node, initialNode, relativePosition, indicesPoli, polygonsIndices);
+            continueSmallPolygon(node, initialNode, indicesPoli, polygonsIndices);
         }
         // here we create a new small polygon
         LOG(LogLevel::INFO) << nodeCreation->getIndex() << " create samll polygon";
         polygonsIndices.push_back(std::make_shared<std::vector<unsigned int>>());
         // we add a new array to the big array of arrays
         std::vector<unsigned int>& indicesPoliCreation = *polygonsIndices[polygonsIndices.size() - 1];
-        continueSmallPolygon(nodeCreation, nodeCreation, RelativePosition::Parallel, indicesPoliCreation, polygonsIndices);
+        continueSmallPolygon(nodeCreation, nodeCreation, indicesPoliCreation, polygonsIndices);
     } else{
         LOG(LogLevel::INFO) << node->getIndex() << " is already touched";
     }
@@ -694,12 +681,11 @@ void Polygon::continueSmallPolygonInsideOutside(const Node* node, const Node* in
     inter.setSegment2(p2, points[node->getIndex()]);
 
     // we loop until we arrive at an intersection point, so when the relative position becomes parallel
-    while (inter.calculateRelativePosition() == relativePosition && node != initialNode) {
+    while (!node->isIntersection() && node != initialNode) {
         indicesPoli.push_back(node->getIndex());
         node = node->next;
-        inter.setSegment1(p1, points[node->getIndex()]);
-        inter.setSegment2(p2, points[node->getIndex()]);
     }
+
     LOG(LogLevel::INFO) << node->getIndex() << " arrived";
     // if the node we are arrived at is the starting node, we are finished, the small polygon is closed
     if (node != initialNode){
@@ -717,12 +703,7 @@ void Polygon::continueSmallPolygonInsideOutside(const Node* node, const Node* in
         if (node == initialNode){
             LOG(LogLevel::INFO) << node->getIndex() << " closing polygon";
         }
-        // sometimes getNextIntersection returns a nullptr, this happens very rarely when there are a lot of points and intersections
-        // and intersector thinks that certain lines are parallel when in reality are not
-//        if (node == nullptr){
-////            LOG(LogLevel::WARN) << "node was nullptr";
-//            return;
-//        }
+
         if (node != nullptr && node != initialNode){
             node->touched = true;
             LOG(LogLevel::INFO) << node->getIndex() << " continue samll polygon";
@@ -754,35 +735,3 @@ void Polygon::continueSmallPolygonInsideOutside(const Node* node, const Node* in
         LOG(LogLevel::INFO) << node->getIndex() << " is already touched";
     }
 }
-
-
-//int notFound = 0;
-//int notPoly = 1;
-//int isPoly = -1;
-//int found = notFound;
-//for (unsigned int l = 0; l < points.size(); l++){
-//    if (Vector2f::AreDoublesEqual(intersectionPoint.normSquared(), points[l].normSquared())){
-//        //std::cout << "found equal\n";
-//        //bool isPolyPoint = false;
-//        found = notPoly;
-//        for (unsigned int q = 0; q < numberIndices; q++){
-//            if (Vector2f::AreDoublesEqual(intersectionPoint.normSquared(), points[indices[q]].normSquared())){
-//                //isPolyPoint = true;
-//                found = isPoly;
-//                break;
-//            }
-//        }
-//        if (found == notPoly){
-//            node = new Node(l);
-//        }
-//        break;
-//    }
-//}
-//if (found == isPoly){
-//    continue;
-//} else if (found == notFound){
-//    points.push_back(intersectionPoint);
-//    extraPoint.push_back(intersectionPoint);
-//    node = new Node(points.size() - 1);
-//}
-

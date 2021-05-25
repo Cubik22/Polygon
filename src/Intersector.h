@@ -4,6 +4,7 @@
 #include "Vector2f.h"
 #include <iostream>
 
+
 enum class IntersectionType{
     Parallel        = 0,
     OutsideSegment  = 1,

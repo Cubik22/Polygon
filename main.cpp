@@ -3,7 +3,7 @@
 
 int main(){
 
-    LOG::LEVEL = LogLevel::WARN;
+    LOG::LEVEL = LogLevel::INFO;
     LOG::PRINT_INFO_LEVEL = false;
 
     Console console;

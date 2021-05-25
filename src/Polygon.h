@@ -16,7 +16,7 @@ public:
     ~Polygon();
 
     Polygon(const Polygon&)                 = delete;
-    Polygon(Polygon&&)                      = delete;
+    Polygon(Polygon&&) noexcept             = delete;
     Polygon& operator=(const Polygon&)      = delete;
     Polygon& operator=(Polygon&&) noexcept  = delete;
 
@@ -31,9 +31,9 @@ public:
     const Node* getStartNode() const;
     unsigned int getNumberIntersections() const;
 
-    void printVertices(LogLevel level = LogLevel::INFO) const;
-    void printIndices(LogLevel level = LogLevel::INFO) const;
-    void printNetwork(LogLevel level = LogLevel::INFO) const;
+    void printVertices              (LogLevel level = LogLevel::INFO) const;
+    void printIndices               (LogLevel level = LogLevel::INFO) const;
+    void printNetwork               (LogLevel level = LogLevel::INFO) const;
     void printNetworkWithCoordinates(LogLevel level = LogLevel::INFO) const;
 
     void createNetwork();
@@ -49,10 +49,10 @@ public:
     void cutInsideOutside(std::vector<std::shared_ptr<std::vector<unsigned int>>>& insideIndices,
                           std::vector<std::shared_ptr<std::vector<unsigned int>>>& outsideIndices);
 
-    float getWidth() const;
+    float getWidth()  const;
     float getHeight() const;
-    float getXMin() const;
-    float getYMin() const;
+    float getXMin()   const;
+    float getYMin()   const;
 
     // this function calculate the polygon area using Gauss
     float calculateArea() const;
@@ -79,6 +79,7 @@ private:
     float xMin;
     float yMin;
 
+    void checkEnoughPointIndices() const;
     // this function calculate the relative orientation of the polygon with the segment
     // it is used in getNextIntersection to, given an intersection node, find wich one of the two intersection nodes closer (up and down)
     // can be reached with a line inside the segment
@@ -98,8 +99,7 @@ private:
     // the fourth paramter is a reference to the particular set of indices of the small polygon, empty if the small polygon is just created
     // the last one is the reference to the array of indices of all small polygon, so when a new small polygon is created
     // we can add his new array of indices to the big array of arrays
-    void continueSmallPolygon(const Node* node, const Node* initialNode, RelativePosition relativePosition,
-                              std::vector<unsigned int>& indicesPoli,
+    void continueSmallPolygon(const Node* node, const Node* initialNode, std::vector<unsigned int>& indicesPoli,
                               std::vector<std::shared_ptr<std::vector<unsigned int>>>& polygonsIndices);
 
     void continueSmallPolygonInsideOutside(const Node* node, const Node* initialNode,

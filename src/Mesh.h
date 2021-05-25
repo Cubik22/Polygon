@@ -16,6 +16,11 @@ public:
     Mesh(const Element& _element, const std::vector<Vector2f> _verticesBorder,
          const unsigned int& _numberX, const unsigned int& _numberY);
 
+    Mesh(const Mesh&)                 = delete;
+    Mesh(Mesh&&) noexcept             = delete;
+    Mesh& operator=(const Mesh&)      = delete;
+    Mesh& operator=(Mesh&&) noexcept  = delete;
+
     unsigned int getNumberPolygons() const;
 
     float getWidth() const;

@@ -7,6 +7,7 @@
 Console::Console() : window{nullptr}, renderer{nullptr}, numberX(3), numberY(3), debug(false) {}
 
 Console::~Console() {
+    // using smart pointers
     // already terminated before
     //terminate();
 }
@@ -23,26 +24,34 @@ void Console::setDebugMode(bool what){
     debug = what;
 }
 
-void Console::setFileNameDebug(const char* name){
+void Console::setFileNameDebug(const std::string& name){
     fileNameDebug = name;
 }
 
 void Console::start(){
+    askModeApp();
     askLoadFromFile();
+
     initWindowAndLibraries();
     if (!app.isVerticesIndicesLoaded()){
         drawPolygon();
     }
     createPolygon();
-    Element element = Element(app.getPolygon());
-    createElement(element);
-    createMesh(element);
-//    if (!app.isSegmentLoaded()){
-//        drawSegment();
-//    }
-//    drawCuttedPolygon();
-//    drawBox();
-//    moveAround();
+
+    if (mode == ModeApp::Cut){
+        if (!app.isSegmentLoaded()){
+            drawSegment();
+        }
+        drawCuttedPolygon();
+        drawBox();
+//        drawGrid();
+//        moveAround();
+    } else if (mode == ModeApp::Mesh){
+        Element element = Element(app.getPolygon());
+        createElement(element);
+        createMesh(element);
+    }
+
     terminate();
     if (!debug){
         askSaveToFile();
@@ -50,12 +59,7 @@ void Console::start(){
 }
 
 void Console::terminate(){
-//    if (renderer != nullptr){
-//        delete renderer;
-//    }
-//    if (window != nullptr){
-//        delete window;
-//    }
+
     Window::terminateGLFW();
 }
 
@@ -150,15 +154,17 @@ void Console::askLoadFromFile(){
                     app.setVerticesIndicesLoaded();
                 }
             }
-            if (Loader::SearchInFile(fileName, "segment", false) > 0){
-                LOG(LogLevel::INFO) << "Segment found";
-                std::cout << "Do you want to load it? [y/N] ";
-                std::getline(std::cin, consoleString);
-                if (consoleString == "y" || consoleString == "Y"){
-                    if (Loader::LoadSegmentFromFile(app.getSegmentForLoading(), fileName) < 0){
-                        LOG(LogLevel::WARN) << "Segment not loaded";
-                    } else{
-                        app.setSegmentLoaded();
+            if (mode == ModeApp::Cut){
+                if (Loader::SearchInFile(fileName, "segment", false) > 0){
+                    LOG(LogLevel::INFO) << "Segment found";
+                    std::cout << "Do you want to load segment? [y/N] ";
+                    std::getline(std::cin, consoleString);
+                    if (consoleString == "y" || consoleString == "Y"){
+                        if (Loader::LoadSegmentFromFile(app.getSegmentForLoading(), fileName) < 0){
+                            LOG(LogLevel::WARN) << "Segment not loaded";
+                        } else{
+                            app.setSegmentLoaded();
+                        }
                     }
                 }
             }
@@ -166,7 +172,29 @@ void Console::askLoadFromFile(){
     }
     LOG::NewLine();
 //    app.printVertices();
-//    app.printIndices();
+    //    app.printIndices();
+}
+
+void Console::askModeApp(){
+    std::string consoleString;
+
+    while (true){
+        std::cout << "<----- Select what you want to do: ----->\n";
+        std::cout << "1) Cut the polygon\n";
+        std::cout << "2) Create the mesh\n";
+        std::cout << "Please insert a number: ";
+        std::getline(std::cin, consoleString);
+
+        if (consoleString == "1"){
+            mode = ModeApp::Cut;
+            return;
+        } else if (consoleString == "2"){
+            mode = ModeApp::Mesh;
+            return;
+        } else{
+            LOG(LogLevel::WARN) << "You inserted a wrong number, please try again";
+        }
+    }
 }
 
 void Console::initWindowAndLibraries(){
@@ -339,6 +367,9 @@ void Console::drawBox(){
     renderer->addShape(new Shape(app.getBoxVertices(), GeometricPrimitive::LinePointClosed,
                                  color[0], color[1], color[2]));
     drawNoInput();
+}
+
+void Console::drawGrid(){
     renderer->removeLastShape();
     renderer->removeLastShape();
 

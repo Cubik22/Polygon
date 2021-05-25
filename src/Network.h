@@ -19,6 +19,11 @@ public:
     Node(unsigned int _index);
     ~Node();
 
+    Node(const Node&)                 = delete;
+    Node(Node&&) noexcept             = delete;
+    Node& operator=(const Node&)      = delete;
+    Node& operator=(Node&&) noexcept  = delete;
+
     mutable bool touched;
 
     // every node
@@ -29,6 +34,8 @@ public:
     Node* down;
 
     unsigned int getIndex() const;
+
+    bool isIntersection() const;
 
     static void PrintNetwork(const Node* start, LogLevel level = LogLevel::INFO);
     static void DeleteNetwork(Node* start);

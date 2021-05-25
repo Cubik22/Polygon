@@ -24,6 +24,11 @@ class Renderer{
 public:
     Renderer();
 
+    Renderer(const Renderer&)                 = delete;
+    Renderer(Renderer&&) noexcept             = delete;
+    Renderer& operator=(const Renderer&)      = delete;
+    Renderer& operator=(Renderer&&) noexcept  = delete;
+
     void addShape(const Shape* shape);
     void replaceShape(unsigned int position, const Shape* shape);
     void removeLastShape();

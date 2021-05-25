@@ -11,17 +11,27 @@
 #define HEIGHT 800
 
 
+enum class ModeApp{
+    Cut,
+    Mesh
+};
+
 class Console{
 
 public:
     Console();
     ~Console();
 
+    Console(const Console&)                 = delete;
+    Console(Console&&) noexcept             = delete;
+    Console& operator=(const Console&)      = delete;
+    Console& operator=(Console&&) noexcept  = delete;
+
     void setNumberX(unsigned int _numberX);
     void setNumberY(unsigned int _numberY);
 
     void setDebugMode(bool what);
-    void setFileNameDebug(const char* name);
+    void setFileNameDebug(const std::string& name);
 
     void start();
 
@@ -30,25 +40,31 @@ private:
     std::unique_ptr<Renderer> renderer;
     Application app;
 
+    ModeApp mode;
+
     unsigned int numberX;
     unsigned int numberY;
 
     bool debug;
-    const char* fileNameDebug;
+    std::string fileNameDebug;
 
     void terminate();
     void drawFillingDoubleBuffers();
     void drawNoInput();
 
+    void askModeApp();
     void askLoadFromFile();
+
     void initWindowAndLibraries();
     void drawPolygon();
     void createPolygon();
     void drawSegment();
     void drawCuttedPolygon();
+
     void askSaveToFile();
 
     void drawBox();
+    void drawGrid();
     void moveAround();
 
     void createElement(Element& element);

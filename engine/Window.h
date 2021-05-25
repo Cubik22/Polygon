@@ -13,6 +13,11 @@ public:
     Window(const char* name, unsigned int width, unsigned int height);
     ~Window();
 
+    Window(const Window&)                 = delete;
+    Window(Window&&) noexcept             = delete;
+    Window& operator=(const Window&)      = delete;
+    Window& operator=(Window&&) noexcept  = delete;
+
     bool shouldClose() const;
     void swapBuffer() const;
     void waitEvents() const;

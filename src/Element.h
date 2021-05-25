@@ -10,6 +10,11 @@ class Element{
 public:
     Element(const Polygon& _poly);
 
+    Element(const Element&)                 = delete;
+    Element(Element&&) noexcept             = delete;
+    Element& operator=(const Element&)      = delete;
+    Element& operator=(Element&&) noexcept  = delete;
+
     const std::vector<std::shared_ptr<std::vector<unsigned int>>>& createElement();
 
     const std::vector<Vector2f>& getPoints() const;

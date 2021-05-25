@@ -12,6 +12,11 @@ class Application{
 public:
     Application();
 
+    Application(const Application&)                 = delete;
+    Application(Application&&) noexcept             = delete;
+    Application& operator=(const Application&)      = delete;
+    Application& operator=(Application&&) noexcept  = delete;
+
     const std::vector<unsigned int> getIndices() const;
     const std::vector<Vector2f> getVertices() const;
     unsigned int getNumberVertices() const;
