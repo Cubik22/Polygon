@@ -8,8 +8,8 @@ int main(){
 
     Console console;
 
-    console.setNumberX(2);
-    console.setNumberY(2);
+    console.setNumberX(4);
+    console.setNumberY(3);
 
 //    console.setDebugMode(true);
 //    console.setFileNameDebug("a.txt");

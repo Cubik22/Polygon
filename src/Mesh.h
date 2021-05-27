@@ -14,7 +14,7 @@ class Mesh{
 
 public:
     Mesh(const Element& _element, const std::vector<Vector2f> _verticesBorder,
-         const unsigned int& _numberX, const unsigned int& _numberY);
+         unsigned int _numberX, unsigned int _numberY, float _elementWidth, float _elementHeight);
 
     Mesh(const Mesh&)                 = delete;
     Mesh(Mesh&&) noexcept             = delete;
@@ -52,14 +52,17 @@ private:
 
     unsigned int numberPolygons;
 
+    unsigned int numberX;
+    unsigned int numberY;
+
+    float elementWidth;
+    float elementHeight;
+
     float width;
     float height;
 
     float xMin;
     float yMin;
-
-    unsigned int numberX;
-    unsigned int numberY;
 
     IndicesElement cutElement(std::vector<Vector2f>& verticesElement,
                               const std::vector<std::shared_ptr<std::vector<unsigned int>>>& startIndices);

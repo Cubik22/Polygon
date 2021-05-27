@@ -54,6 +54,7 @@ private:
 
     void askModeApp();
     void askLoadFromFile();
+    void askNumberPolygonMesh();
 
     void initWindowAndLibraries();
     void drawPolygon();

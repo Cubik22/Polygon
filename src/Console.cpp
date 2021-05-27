@@ -3,6 +3,7 @@
 #include "Loader.h"
 #include "Element.h"
 #include <fstream>
+#include <sstream>
 
 Console::Console() : window{nullptr}, renderer{nullptr}, numberX(3), numberY(3), debug(false) {}
 
@@ -170,9 +171,71 @@ void Console::askLoadFromFile(){
             }
         }
     }
+    if (mode == ModeApp::Mesh){
+        LOG::NewLine();
+        askNumberPolygonMesh();
+    }
     LOG::NewLine();
 //    app.printVertices();
     //    app.printIndices();
+}
+
+void Console::askNumberPolygonMesh(){
+    std::string consoleString;
+
+    std::stringstream convert;
+
+    while (true){
+        std::cout << "Choose the number of polygons you want on the x axis\n";
+        std::cout << "Please insert a number between 1 and 20: ";
+        std::getline(std::cin, consoleString);
+
+        unsigned int xNum = 0;
+
+        convert.str(consoleString);
+        convert >> xNum;
+        if (convert.fail()){
+            LOG(LogLevel::WARN) << "Please insert a valid number";
+            convert.clear();
+            continue;
+        }
+        convert.clear();
+
+        if (xNum >= 1 && xNum <= 20){
+            setNumberX(xNum);
+            break;
+        } else{
+            LOG(LogLevel::WARN) << "You inserted a wrong number, please try again";
+            continue;
+        }
+    }
+
+    LOG::NewLine();
+
+    while (true){
+        std::cout << "Choose the number of polygons you want on the y axis\n";
+        std::cout << "Please insert a number between 1 and 20: ";
+        std::getline(std::cin, consoleString);
+
+        unsigned int yNum = 0;
+
+        convert.str(consoleString);
+        convert >> yNum;
+        if (convert.fail()){
+            LOG(LogLevel::WARN) << "Please insert a valid number";
+            convert.clear();
+            continue;
+        }
+        convert.clear();
+
+        if (yNum >= 1 && yNum <= 20){
+            setNumberY(yNum);
+            break;
+        } else{
+            LOG(LogLevel::WARN) << "You inserted a wrong number, please try again";
+            continue;
+        }
+    }
 }
 
 void Console::askModeApp(){
@@ -187,14 +250,16 @@ void Console::askModeApp(){
 
         if (consoleString == "1"){
             mode = ModeApp::Cut;
-            return;
+            break;
         } else if (consoleString == "2"){
             mode = ModeApp::Mesh;
-            return;
+            break;
         } else{
             LOG(LogLevel::WARN) << "You inserted a wrong number, please try again";
         }
     }
+
+    LOG::NewLine();
 }
 
 void Console::initWindowAndLibraries(){
@@ -461,10 +526,16 @@ void Console::createElement(Element& element){
 void Console::createMesh(Element& element){
     renderer->removeAllShapes();
 
-    float thick = 0.2;
+    float thickDownLeft = 0.2;
+    float thickUpRight  = 0.3;
     const std::vector<Vector2f> verticesBorder = {
-        {0.0, -1 + thick}, {1 - thick, 0.0}, {0.0, 1 - thick}, {-1 + thick, 0.0}
+        {0.0, -1 + thickDownLeft}, {1 - thickUpRight, 0.0}, {0.0, 1 - thickUpRight}, {-1 + thickDownLeft, 0.0}
     };
+    float remaining = 2 - 2 * thickDownLeft;
+
+    float elemenWidth = remaining / numberX;
+    float elementHeight = remaining / numberY;
+
     std::vector<float> color = Renderer::getColor(RendColor::Yellow);
     Shape* shapeNuova = new Shape(verticesBorder, GeometricPrimitive::LinePointClosed,
                                   color[0], color[1], color[2]);
@@ -472,7 +543,8 @@ void Console::createMesh(Element& element){
 
 //    unsigned int numberX = 2;
 //    unsigned int numberY = 2;
-    Mesh mesh = Mesh(element, verticesBorder, numberX, numberY);
+    Mesh mesh = Mesh(element, verticesBorder, numberX, numberY, elemenWidth, elementHeight);
+
 
     const std::vector<std::shared_ptr<std::vector<unsigned int>>>& indices = mesh.getIndices();
     unsigned int numberPolygons = mesh.getNumberPolygons();

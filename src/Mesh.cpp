@@ -2,8 +2,8 @@
 #include "Logger.h"
 
 Mesh::Mesh(const Element& _element, const std::vector<Vector2f> _verticesBorder,
-           const unsigned int& _numberX, const unsigned int& _numberY) :
-    verticesBorder(_verticesBorder), numberX(_numberX), numberY(_numberY){
+           unsigned int _numberX, unsigned int _numberY, float _elementWidth, float _elementHeight) :
+    verticesBorder(_verticesBorder), numberX(_numberX), numberY(_numberY), elementWidth(_elementWidth), elementHeight(_elementHeight){
 
     Polygon::createBoundingBoxVariables(verticesBorder, width, height, xMin, yMin);
 
@@ -16,21 +16,25 @@ Mesh::Mesh(const Element& _element, const std::vector<Vector2f> _verticesBorder,
     }
 
     const std::vector<Vector2f>& _vertices = _element.getPoints();
-    float elementWidth = _element.getWidth();
-    float elementHeight = _element.getHeight();
-    float elementXMin = _element.getXMin();
-    float elementYMin = _element.getYMin();
+    float originalWidth  = _element.getWidth();
+    float originalHeight = _element.getHeight();
+    float originalXMin   = _element.getXMin();
+    float originalYMin   = _element.getYMin();
+
+    Polygon::scaleXYMin(&originalXMin, &originalYMin, originalWidth, originalHeight, elementWidth, elementHeight);
 
     if (!debug){
         for (unsigned int x = 0; x < numberX; x++){
             for (unsigned int y = 0; y < numberY; y++){
-                vertices.push_back(Polygon::translateVerticesPointer(_vertices,
-                                   xMin - elementXMin + x * elementWidth, yMin - elementYMin + y * elementHeight));
+                vertices.push_back(Polygon::translateVerticesPointer(Polygon::scaleVertices(
+                                   _vertices, originalWidth, originalHeight, elementWidth, elementHeight),
+                                   xMin - originalXMin + x * elementWidth, yMin - originalYMin + y * elementHeight));
             }
         }
     } else{
-        vertices.push_back(Polygon::translateVerticesPointer(_vertices,
-                           xMin - elementXMin + xDebug * elementWidth, yMin - elementYMin + yDebug * elementHeight));
+        vertices.push_back(Polygon::translateVerticesPointer(Polygon::scaleVertices(
+                           _vertices, originalWidth, originalHeight, elementWidth, elementHeight),
+                           xMin - originalXMin + xDebug * elementWidth, yMin - originalYMin + yDebug * elementHeight));
     }
 }
 

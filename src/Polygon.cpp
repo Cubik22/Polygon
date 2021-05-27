@@ -338,7 +338,7 @@ void Polygon::createNetworkMesh(std::vector<Vector2f>& extraPoint){
         LOG(LogLevel::WARN) << "1 intersection";
         startNode = firstNode;
         numberIntersections = 0;
-    }else{
+    } else{
         LOG(LogLevel::ERROR) << "problems when setting startNode, number of intersection: " << numberIntersections;
         startNode = firstNode;
     }
@@ -408,7 +408,7 @@ void Polygon::cutInsideOutside(std::vector<std::shared_ptr<std::vector<unsigned 
                 outsideIndices.push_back(std::make_shared<std::vector<unsigned int>>(indices));
                 return;
             }
-            node = firstNode->next;
+            node = node->next;
         } while (node != firstNode);
         LOG(LogLevel::ERROR) << "relative position is parallel when no intersection";
     }
@@ -456,9 +456,10 @@ const double Polygon::BIG_DOUBLE = 1.0E+10;
 
 std::vector<Vector2f> Polygon::translateVertices(const std::vector<Vector2f>& vertices, float diff_x, float diff_y)
 {
+    unsigned int sizeVertices = vertices.size();
     std::vector<Vector2f> translated;
 
-    for (unsigned int i = 0; i < vertices.size(); i++){
+    for (unsigned int i = 0; i < sizeVertices; i++){
         translated.push_back(vertices[i] + Vector2f(diff_x, diff_y));
     }
 
@@ -467,13 +468,39 @@ std::vector<Vector2f> Polygon::translateVertices(const std::vector<Vector2f>& ve
 
 std::shared_ptr<std::vector<Vector2f>> Polygon::translateVerticesPointer(const std::vector<Vector2f>& vertices, float diff_x, float diff_y)
 {
+    unsigned int sizeVertices = vertices.size();
     std::shared_ptr<std::vector<Vector2f>> translated = std::make_shared<std::vector<Vector2f>>();
 
-    for (unsigned int i = 0; i < vertices.size(); i++){
+    for (unsigned int i = 0; i < sizeVertices; i++){
         translated->push_back(vertices[i] + Vector2f(diff_x, diff_y));
     }
 
     return translated;
+}
+
+std::vector<Vector2f> Polygon::scaleVertices(const std::vector<Vector2f>& vertices,
+                                             float originalWidth, float originalHeight, float newWidth, float newHeight)
+{
+    unsigned int sizeVertices = vertices.size();
+    std::vector<Vector2f> scaled;
+
+    for (unsigned int i = 0; i < sizeVertices; i++){
+        scaled.push_back({((vertices[i].x + 1.0f) * newWidth / originalWidth) - 1.0f,
+                          ((vertices[i].y + 1.0f) * newHeight / originalHeight) - 1.0f});
+    }
+
+    return scaled;
+}
+
+void Polygon::scaleXYMin(float* const originalXMin, float* const originalYMin,
+                         float originalWidth, float originalHeight, float newWidth, float newHeight)
+{
+    if (originalXMin != nullptr){
+        *originalXMin = ((*originalXMin + 1.0f) * newWidth / originalWidth) - 1.0f;
+    }
+    if (originalYMin != nullptr){
+        *originalYMin = ((*originalYMin + 1.0f) * newHeight / originalHeight) - 1.0f;
+    }
 }
 
 void Polygon::createBoundingBoxVariables(const std::vector<Vector2f>& vertices, float& width, float& height, float& xMin, float& yMin){
@@ -589,12 +616,13 @@ void Polygon::sortIntersectionsNetwork(const std::vector<Node*>& nodes){
 
 void Polygon::continueSmallPolygon(const Node* node, const Node* initialNode, std::vector<unsigned int>& indicesPoli,
                                    std::vector<std::shared_ptr<std::vector<unsigned int>>>& polygonsIndices){
+//    const Node* startNode = node;
     // first we add the node we currently are at to the list of indices of the small polygon
     indicesPoli.push_back(node->getIndex());
     node = node->next;
 
     // we loop and add the nodes while we are not at an intersection node
-    while (!node->isIntersection()) {
+    while (!node->isIntersection() && node != initialNode) {
         indicesPoli.push_back(node->getIndex());
         node = node->next;
     }
@@ -616,7 +644,8 @@ void Polygon::continueSmallPolygon(const Node* node, const Node* initialNode, st
         if (node == initialNode){
             LOG(LogLevel::INFO) << node->getIndex() << " closing polygon";
         }
-        // in the past: sometimes getNextIntersection returns a nullptr, this happens very rarely when there are a lot of points and intersections
+        // in the past: sometimes getNextIntersection returns a nullptr,
+        // this happens very rarely when there are a lot of points and intersections
         // and intersector thinks that certain lines are parallel when in reality are not
         // now it is solved because we no longer loop until relative position change but until we reach an intersection node
         if (node != nullptr && node != initialNode){
@@ -641,6 +670,7 @@ void Polygon::continueSmallPolygonInsideOutside(const Node* node, const Node* in
     std::vector<std::shared_ptr<std::vector<unsigned int>>>& insidePolygonsIndices,
     std::vector<std::shared_ptr<std::vector<unsigned int>>>& outsidePolygonsIndices){
 
+//    const Node* startNode = node;
     // this check is used when the small polygon is just created and the relative position is parallel
     // becuse we are starting from an intersection point, if we not change it we will never enter in the while loop
 

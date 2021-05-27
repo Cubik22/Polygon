@@ -24,6 +24,7 @@ public:
     static const double TOLERANCE;
     static bool AreDoublesEqual(double a, double b, double tolerance = Vector2f::TOLERANCE);
 };
+
 std::ostream& operator<< (std::ostream& ostrem, const Vector2f& point);
 
 #endif // VECTOR2F_H

@@ -62,6 +62,12 @@ public:
     static std::vector<Vector2f> translateVertices(const std::vector<Vector2f>& vertices, float diffX, float diffY);
     static std::shared_ptr<std::vector<Vector2f>> translateVerticesPointer(const std::vector<Vector2f>& vertices, float diffX, float diffY);
 
+    static std::vector<Vector2f> scaleVertices(const std::vector<Vector2f>& vertices,
+                                               float originalWidth, float originalHeight, float newWidth, float newHeight);
+
+    static void scaleXYMin(float* const originalXMin, float* const originalYMin,
+                           float originalWidth, float originalHeight, float newWidth, float newHeight);
+
     static void createBoundingBoxVariables(const std::vector<Vector2f>& vertices, float& width, float& height, float& xMin, float& yMin);
 
 private:
@@ -79,16 +85,21 @@ private:
     float xMin;
     float yMin;
 
+    // simply check if the number of points and indices is greater than 1
     void checkEnoughPointIndices() const;
+
     // this function calculate the relative orientation of the polygon with the segment
     // it is used in getNextIntersection to, given an intersection node, find wich one of the two intersection nodes closer (up and down)
     // can be reached with a line inside the segment
     void calculateOrientation();
     //RelativePosition calculateOrientationFromNode(Node* node);
+
     // as stated before, this function only takes intersection nodes as input
     const Node* getNextIntersection(const Node* node);
+
     // this function is used to order the intersection nodes, from the one the segment touches last to the one it touches first
     void sortIntersectionsNetwork(const std::vector<Node*>& nodes);
+
     // this is the function that will be recursively called when cutting the polygon
     // the first parameter is the node we currently are at when cutting the polygon
     // the second parameter is the initial node of the small polygon we are considering
@@ -102,6 +113,7 @@ private:
     void continueSmallPolygon(const Node* node, const Node* initialNode, std::vector<unsigned int>& indicesPoli,
                               std::vector<std::shared_ptr<std::vector<unsigned int>>>& polygonsIndices);
 
+    // this is the same but is used when we want to distinguish between polygons up or below segment
     void continueSmallPolygonInsideOutside(const Node* node, const Node* initialNode,
         RelativePosition relativePosition, std::shared_ptr<std::vector<unsigned int>> indicesPoli,
         std::vector<std::shared_ptr<std::vector<unsigned int>>>& insidePolygonsIndices,
