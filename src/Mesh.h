@@ -5,6 +5,7 @@
 #include "Segment.h"
 #include <vector>
 
+
 struct IndicesElement{
     std::shared_ptr<std::vector<std::shared_ptr<std::vector<unsigned int>>>> indicesInside;
     std::shared_ptr<std::vector<std::shared_ptr<std::vector<unsigned int>>>> indicesOutside;
@@ -22,6 +23,7 @@ public:
     Mesh& operator=(Mesh&&) noexcept  = delete;
 
     unsigned int getNumberPolygons() const;
+    unsigned int getNumberElements() const;
 
     float getWidth() const;
     float getHeight() const;
@@ -34,6 +36,8 @@ public:
 
     const std::vector<Vector2f>& getVertices(unsigned int x, unsigned int y) const;
     const std::vector<Vector2f>& getVertices(unsigned int i) const;
+
+    const std::vector<std::shared_ptr<std::vector<Vector2f>>> getAllVertices() const;
 
     const std::vector<std::shared_ptr<std::vector<unsigned int>>>& getIndices() const;
 
@@ -50,8 +54,6 @@ private:
 
     std::vector<Vector2f> verticesBorder;
 
-    unsigned int numberPolygons;
-
     unsigned int numberX;
     unsigned int numberY;
 
@@ -63,6 +65,9 @@ private:
 
     float xMin;
     float yMin;
+
+    const unsigned int numberElements;
+    const unsigned int numberPolygons;
 
     IndicesElement cutElement(std::vector<Vector2f>& verticesElement,
                               const std::vector<std::shared_ptr<std::vector<unsigned int>>>& startIndices);

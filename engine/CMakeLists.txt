@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.14)
 
 # Set Project Name and language used
 project(engine LANGUAGES CXX C)
@@ -33,6 +33,11 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/glfw)
+
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/glew)
 
-target_link_libraries(${PROJECT_NAME} PUBLIC Threads::Threads libglew_static glfw)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/freetype)
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/freetype/include)
+
+target_link_libraries(${PROJECT_NAME} PUBLIC Threads::Threads libglew_static glfw freetype)

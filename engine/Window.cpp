@@ -92,6 +92,10 @@ void Window::processImput(){
     updatePressedClick(glRightPressed, rightPressed, rightClick);
     bool glLeftPressed = glfwGetKey(glWindow, GLFW_KEY_LEFT) == GLFW_PRESS;
     updatePressedClick(glLeftPressed, leftPressed, leftClick);
+    bool glDPressed = glfwGetKey(glWindow, GLFW_KEY_D) == GLFW_PRESS;
+    updatePressedClick(glDPressed, dPressed, dClick);
+    bool glSpacePressed = glfwGetKey(glWindow, GLFW_KEY_SPACE) == GLFW_PRESS;
+    updatePressedClick(glSpacePressed, spacePressed, spaceClick);
 }
 
 bool Window::isMouseLeftClick() const{
@@ -114,6 +118,10 @@ bool Window::isEscClick() const{
     return escClick;
 }
 
+bool Window::isSpaceClick() const{
+    return spaceClick;
+}
+
 bool Window::isUpClick() const{
     return upClick;
 }
@@ -130,6 +138,10 @@ bool Window::isLeftClick() const{
     return leftClick;
 }
 
+bool Window::isDClick() const{
+    return dClick;
+}
+
 void Window::initiGLFW(){
     /* Initialize the library */
     if (!glfwInit()){
@@ -138,6 +150,10 @@ void Window::initiGLFW(){
         exit(-1);
     } else{
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
         //LoggerStatic::Message("GLFW initialized correctly");
         LOG(LogLevel::INFO) << "GLFW initialized correctly";
     }

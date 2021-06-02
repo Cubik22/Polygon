@@ -91,3 +91,7 @@ void Shader::setUniform3f(const char *name, float a, float b, float c) const{
 void Shader::setUniform4f(const char *name, float a, float b, float c, float d) const{
     glUniform4f(getUniformLocation(name), a, b, c, d);
 }
+
+unsigned int Shader::getID() const{
+    return rendererID;
+}

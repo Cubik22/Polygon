@@ -8,15 +8,16 @@ int main(){
 
     Console console;
 
-    console.setNumberX(4);
-    console.setNumberY(3);
+//    console.setDebugStatus(true);
+//    console.setDebugMode(ModeApp::Mesh);
+//    console.setFileNameDebug("first.txt");
 
-//    console.setDebugMode(true);
-//    console.setFileNameDebug("a.txt");
+//    console.setNumberX(2);
+//    console.setNumberY(2);
 
 //    Mesh::setDebugMode(true);
-//    Mesh::setXDebug(2);
-//    Mesh::setYDebug(0);
+//    Mesh::setXDebug(0);
+//    Mesh::setYDebug(1);
 
     console.start();
 

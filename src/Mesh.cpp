@@ -3,12 +3,14 @@
 
 Mesh::Mesh(const Element& _element, const std::vector<Vector2f> _verticesBorder,
            unsigned int _numberX, unsigned int _numberY, float _elementWidth, float _elementHeight) :
-    verticesBorder(_verticesBorder), numberX(_numberX), numberY(_numberY), elementWidth(_elementWidth), elementHeight(_elementHeight){
+    verticesBorder(_verticesBorder), numberX(_numberX), numberY(_numberY),
+    elementWidth(_elementWidth), elementHeight(_elementHeight),
+    numberElements(Mesh::debug ? 1 : numberX * numberY), numberPolygons(_element.getPolygonsIndices().size()){
 
     Polygon::createBoundingBoxVariables(verticesBorder, width, height, xMin, yMin);
 
     const std::vector<std::shared_ptr<std::vector<unsigned int>>>& _indices = _element.getPolygonsIndices();
-    numberPolygons = _indices.size();
+
     unsigned int indicesSize = _indices.size();
     for (unsigned int i = 0; i < indicesSize; i++){
         indices.push_back(_indices[i]);
@@ -41,6 +43,10 @@ Mesh::Mesh(const Element& _element, const std::vector<Vector2f> _verticesBorder,
 unsigned int Mesh::getNumberPolygons() const
 {
     return numberPolygons;
+}
+
+unsigned int Mesh::getNumberElements() const{
+    return numberElements;
 }
 
 float Mesh::getWidth() const
@@ -95,17 +101,19 @@ const std::vector<Vector2f>& Mesh::getVertices(unsigned int i) const
     return *vertices[i];
 }
 
+const std::vector<std::shared_ptr<std::vector<Vector2f>>> Mesh::getAllVertices() const{
+    return vertices;
+}
+
 const std::vector<std::shared_ptr<std::vector<unsigned int>>>& Mesh::getIndices() const{
     return indices;
 }
 
 std::vector<IndicesElement> Mesh::cut(){
     std::vector<IndicesElement> elements;
-    for (unsigned int x = 0; x < numberX; x++){
-        for (unsigned int y = 0; y < numberY; y++){
-            elements.push_back(cutElement(getVerticesPrivate(x, y), indices));
-            //std::cout << "finito x: " << x << " y: " << y << "\n";
-        }
+    for (unsigned int i = 0; i < numberElements; i++){
+        elements.push_back(cutElement(getVerticesPrivate(i), indices));
+        //std::cout << "finito x: " << x << " y: " << y << "\n";
     }
     return elements;
 }
@@ -134,7 +142,7 @@ void Mesh::setYDebug(unsigned int yD){
 void printElement(std::vector<Vector2f>& verticesElement){
     std::cout << "vertices element\n";
     for (unsigned int l = 0; l < verticesElement.size(); l++){
-        std::cout << l << ": x: " << verticesElement[l].x + 0.8 << " y: " << verticesElement[l].y + 0.8 << "\n";
+        std::cout << l << ": x: " << verticesElement[l].x << " y: " << verticesElement[l].y << "\n";
     }
 }
 
@@ -147,11 +155,8 @@ void printIndices(std::vector<unsigned int>& indices){
 
 IndicesElement Mesh::cutElement(std::vector<Vector2f>& verticesElement,
                                 const std::vector<std::shared_ptr<std::vector<unsigned int>>>& startIndices){
-    //printElement(verticesElement);
-    //LDEB << "cut element";
     unsigned int numberVerticesBorder = verticesBorder.size();
-//    std::shared_ptr<std::vector<std::shared_ptr<std::vector<unsigned int>>>> startIndicesPoi =
-//                    std::make_shared<std::vector<std::shared_ptr<std::vector<unsigned int>>>>(startIndices);
+
     std::shared_ptr<std::vector<std::shared_ptr<std::vector<unsigned int>>>> indicesInside =
                     std::make_shared<std::vector<std::shared_ptr<std::vector<unsigned int>>>>();
     std::shared_ptr<std::vector<std::shared_ptr<std::vector<unsigned int>>>> indicesOutside =
@@ -162,10 +167,17 @@ IndicesElement Mesh::cutElement(std::vector<Vector2f>& verticesElement,
 //        poly.setSegment(verticesBorder[0], verticesBorder[1]);
         poly.createNetworkMesh(verticesElement);
         //printElement(verticesElement);
-        //poly.printNetworkWithCoordinates(LogLevel::ERROR);
         poly.cutInsideOutside(*indicesInside, *indicesOutside);
-        //poly.printNetworkWithCoordinates(LogLevel::ERROR);
     }
+
+//    std::cout << "OUTSIDE INDICES\n";
+//    for (unsigned int i = 0; i  < indicesOutside->size(); i++){
+//        std::vector<unsigned int>& indi = *indicesOutside->at(i);
+//        for (unsigned int q = 0; q < indi.size(); q++){
+//            std::cout << indi[q] << " ";
+//        }
+//        std::cout << "\n";
+//    }
 
 //    for (unsigned int n = 1; n < 2; n++){
     for (unsigned int n = 0; n < numberVerticesBorder - 1; n++){

@@ -3,6 +3,7 @@
 
 #include "Shape.h"
 #include <vector>
+#include <map>
 
 
 enum class RendColor{
@@ -17,6 +18,16 @@ enum class RendColor{
     Green       = 8,
     BlueViolet  = 9,
     PinkDeep    = 10
+};
+
+// Holds all state information relevant to a character as loaded using FreeType
+struct Character {
+    unsigned int TextureID; // ID handle of the glyph texture
+    unsigned int SizeX;  // Size of glyph
+    unsigned int SizeY;
+    int BearingX;   // Offset from baseline to left/top of glyph
+    int BearingY;
+    unsigned int Advance;   // Horizontal offset to advance to next glyph
 };
 
 class Renderer{
@@ -38,9 +49,12 @@ public:
 
     unsigned int getNumberShapes() const;
 
+    void drawText(const std::string& text, float x, float y, float scale, float r = 1, float g = 1, float b = 1);
+
     static bool PRINT_INFO;
 
     static void initGLEW();
+
     static void setLineWidth(unsigned int width);
 
     static std::vector<float> getNextColor();
@@ -50,7 +64,16 @@ public:
 
 private:
     Shader shader;
+    Shader textShader;
+
+    unsigned int VAO;
+    unsigned int VBO;
+
+    std::map<char, Character> Characters;
+
     std::vector<const Shape*> shapes;
+
+    void initFreetype();
 
     void setPolygonColorFloat(float r, float g, float b) const;
     void setPolygonColorFloat(std::vector<float> rgb) const;
@@ -62,6 +85,9 @@ private:
 
     static const char* getVertexShader();
     static const char* getFragmentShader();
+
+    static const char* getTextVertexShader();
+    static const char* getTextFragmentShader();
 };
 
 #endif // RENDERER_H

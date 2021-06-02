@@ -22,6 +22,8 @@ public:
     double normSquared() const;
 
     static const double TOLERANCE;
+    static const double SOFT_TOLERANCE;
+
     static bool AreDoublesEqual(double a, double b, double tolerance = Vector2f::TOLERANCE);
 };
 

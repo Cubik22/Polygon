@@ -55,7 +55,7 @@ public:
     float getYMin()   const;
 
     // this function calculate the polygon area using Gauss
-    float calculateArea() const;
+    static double CalculateArea(const std::vector<Vector2f>& vertices, const std::vector<unsigned int>& indices);
 
     static const double BIG_DOUBLE;
 
@@ -87,6 +87,8 @@ private:
 
     // simply check if the number of points and indices is greater than 1
     void checkEnoughPointIndices() const;
+
+    bool checkIsPointIntersection(const Node* node) const;
 
     // this function calculate the relative orientation of the polygon with the segment
     // it is used in getNextIntersection to, given an intersection node, find wich one of the two intersection nodes closer (up and down)

@@ -1,0 +1,16 @@
+# segment
+-0.75 0.75
+0.75 -0.75
+# number of vertices
+3
+# indices
+0 1 2 550036416
+# vertices
+-0.5 -0.5
+0.5 -0.5
+0.5 0.5
+# number of small polygons
+2
+# small polygons indices
+3 0 1 
+1 2 3 

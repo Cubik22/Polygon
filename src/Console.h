@@ -30,7 +30,8 @@ public:
     void setNumberX(unsigned int _numberX);
     void setNumberY(unsigned int _numberY);
 
-    void setDebugMode(bool what);
+    void setDebugStatus(bool what);
+    void setDebugMode(const ModeApp& mode);
     void setFileNameDebug(const std::string& name);
 
     void start();
@@ -45,12 +46,35 @@ private:
     unsigned int numberX;
     unsigned int numberY;
 
+    // debug variables
+
+    // this set the status to tebug
     bool debug;
+    ModeApp debugMode;
     std::string fileNameDebug;
+
+    // drawDebug draw indices on the screen
+    bool drawDebug;
+    float textScale;
 
     void terminate();
     void drawFillingDoubleBuffers();
+    bool processWindow();
     void drawNoInput();
+    void drawNoInput(const std::vector<Vector2f>& vertices,
+                     const std::vector<std::shared_ptr<std::vector<unsigned int>>>& indices);
+
+    void drawNoInput(const std::vector<std::shared_ptr<std::vector<Vector2f>>>& vertices,
+                     const std::vector<std::shared_ptr<std::vector<unsigned int>>>& indices);
+
+    void drawNoInput(const std::vector<Vector2f>& vertices,
+                     const IndicesElement& indicesElement);
+
+    void drawNoInput(const std::vector<std::shared_ptr<std::vector<Vector2f>>>& vertices,
+                     const std::vector<IndicesElement>& indicesElement);
+
+    void drawIndices(const std::vector<Vector2f>& vertices,
+                     const std::vector<std::shared_ptr<std::vector<unsigned int>>>& indices);
 
     void askModeApp();
     void askLoadFromFile();
@@ -62,7 +86,9 @@ private:
     void drawSegment();
     void drawCuttedPolygon();
 
-    void askSaveToFile();
+    void askSaveToFile(const Element& element);
+    void savePolygon();
+    void saveElement(const Element& element);
 
     void drawBox();
     void drawGrid();

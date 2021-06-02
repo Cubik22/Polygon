@@ -19,6 +19,8 @@ public:
     void setUniform3f(const char* name, float a, float b, float c) const;
     void setUniform4f(const char* name, float a, float b, float c, float d) const;
 
+    unsigned int getID() const;
+
 private:
     unsigned int rendererID;
     unsigned int create(const char* vertexShader, const char* fragmentShader) const;

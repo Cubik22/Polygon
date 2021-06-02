@@ -1,0 +1,12 @@
+# number of vertices
+4
+# vertices
+-0.5 -0.5
+0.5 -0.5
+0.5 0.5
+-0.5 0.5
+# number of small polygons
+2
+# small polygons indices
+2 0 1 
+2 3 0 

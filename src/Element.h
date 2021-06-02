@@ -20,6 +20,8 @@ public:
     const std::vector<Vector2f>& getPoints() const;
     const std::vector<std::shared_ptr<std::vector<unsigned int>>>& getPolygonsIndices() const;
 
+    const std::vector<unsigned int> getStartingInidices() const;
+
     float getWidth() const;
     float getHeight() const;
 

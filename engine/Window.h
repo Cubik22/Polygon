@@ -33,11 +33,14 @@ public:
     bool isEnterClick() const;
     bool isBackClick() const;
     bool isEscClick() const;
+    bool isSpaceClick() const;
 
     bool isUpClick() const;
     bool isDownClick() const;
     bool isRightClick() const;
     bool isLeftClick() const;
+
+    bool isDClick() const;
 
     static void initiGLFW();
     static void terminateGLFW();
@@ -59,6 +62,8 @@ private:
     bool backClick;
     bool escPressed;
     bool escClick;
+    bool spacePressed;
+    bool spaceClick;
 
     bool upPressed;
     bool upClick;
@@ -68,6 +73,9 @@ private:
     bool rightClick;
     bool leftPressed;
     bool leftClick;
+
+    bool dPressed;
+    bool dClick;
 
     friend void updatePressedClick(bool glPressed, bool& pressed, bool& click);
     friend void mouseCallback(GLFWwindow* glWindow, double xpos, double ypos);

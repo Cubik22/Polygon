@@ -8,7 +8,7 @@ Vector2f::Vector2f(float _x, float _y) : x{_x}, y{_y} {}
 Vector2f::Vector2f(const Vector2f &copy) : x{copy.x}, y{copy.y} {}
 
 bool Vector2f::operator==(const Vector2f &equal) const{
-    return x == equal.x && y == equal.y;
+    return AreDoublesEqual(x, equal.x) && AreDoublesEqual(y, equal.y);
 }
 
 void Vector2f::operator=(const Vector2f &other){
@@ -36,7 +36,9 @@ double Vector2f::normSquared() const{
     return x * x + y * y;
 }
 
-const double Vector2f::TOLERANCE = 1.0E-7;
+const double Vector2f::TOLERANCE = 1.0E-5;
+
+const double Vector2f::SOFT_TOLERANCE = 1.0E-2;
 
 bool Vector2f::AreDoublesEqual(double a, double b, double tolerance){
     return abs(a - b) < tolerance;

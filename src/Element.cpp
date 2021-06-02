@@ -49,7 +49,7 @@ const std::vector<std::shared_ptr<std::vector<unsigned int>>>& Element::createEl
 
 const std::vector<Vector2f>& Element::getPoints() const{
     if (!created){
-        throw std::runtime_error("Element not created when trying to get points");
+//        LOG(LogLevel::WARN) << "Element not created when trying to get points";
     }
     return points;
 }
@@ -59,6 +59,10 @@ const std::vector<std::shared_ptr<std::vector<unsigned int>>>& Element::getPolyg
         throw std::runtime_error("Element not created when trying to get indices");
     }
     return polygonsIndices;
+}
+
+const std::vector<unsigned int> Element::getStartingInidices() const{
+    return indices;
 }
 
 float Element::getWidth() const{

@@ -5,7 +5,7 @@
 
 #ifdef _WIN32
 
-// stylish way to rename Polygon class in windows.h
+// renaming Polygon class in windows.h so it does not conflict with our Polygon
 #define Polygon POLYGON
 #include <windows.h>
 #undef Polygon

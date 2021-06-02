@@ -3,7 +3,7 @@
 #include "Logger.h"
 
 Intersector::Intersector() : intersectionCalculated{false}, relativePositionCalculated{false},
-                             toleranceParallelism{1.0E-7}, toleranceOnVertex{1.0E-7}, intersectionPoint{0.0, 0.0} {}
+                             toleranceParallelism{1.0E-4}, toleranceOnVertex{1.0E-4}, intersectionPoint{0.0, 0.0} {}
 
 void Intersector::setSegment1(const Vector2f &_r1, const Vector2f &_r2){
     r1 = _r1;
@@ -141,10 +141,16 @@ void Intersector::calculateLines(){
 std::ostream& operator<<(std::ostream& ostrem, const IntersectionType& type){
     if (type == IntersectionType::Parallel){
         ostrem << "Parallel";
-    } else if (type == IntersectionType::InsideSegment){
-        ostrem << "Inside segment";
     } else if (type == IntersectionType::OutsideSegment){
         ostrem << "Outside segment";
+    } else if (type == IntersectionType::InsideSegment){
+        ostrem << "Inside segment";
+    } else if (type == IntersectionType::FirstOnVertex){
+        ostrem << "First on vertex";
+    } else if (type == IntersectionType::SecondOnVertex){
+        ostrem << "Second on vertex";
+    } else if (type == IntersectionType::BothOnVertex){
+        ostrem << "Both on vertex";
     }
     return ostrem;
 }

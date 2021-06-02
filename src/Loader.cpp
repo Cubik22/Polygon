@@ -57,7 +57,37 @@ int Loader::LoadSegmentFromFile(std::vector<Vector2f>& segmentPoints, const std:
     return 1;
 }
 
-int Loader::LoadVerticesFromFile(std::vector<Vector2f>& vertices, std::vector<unsigned int>& indices,
+int Loader::LoadJustVerticesFromFile(std::vector<Vector2f>& vertices, const std::string& fileName, unsigned int numberVertices){
+    if (numberVertices == 0){
+        LOG(LogLevel::ERROR) << "number of vertices should be a number greather than 0";
+        return -2;
+    }
+    std::ifstream file;
+    OpenFileAndSearch(file, fileName, "vertices");
+    std::string line;
+    std::stringstream convert;
+    vertices.reserve(numberVertices);
+    for (unsigned int i = 0; i < numberVertices; i++){
+        getline(file, line);
+        float x, y;
+        convert.str(line);
+        convert >> x >> y;
+        if (convert.fail()){
+            LOG(LogLevel::ERROR) << "problems when reading vertices";
+            LOG(LogLevel::ERROR) << "Line: " << line;
+            vertices.clear();
+            return -3;
+        }
+        vertices.emplace_back(x, y);
+        convert.clear();
+    }
+    file.close();
+    LOG(LogLevel::INFO) << "Correctly loaded vertices from " << fileName;
+
+    return 1;
+}
+
+int Loader::LoadVerticesIndicesFromFile(std::vector<Vector2f>& vertices, std::vector<unsigned int>& indices,
                                  const std::string& fileName, unsigned int numberVertices, bool loadIndices){
     if (numberVertices == 0){
         LOG(LogLevel::ERROR) << "number of vertices should be a number greather than 0";
@@ -157,6 +187,41 @@ void Loader::SavePolygonToFile(const std::vector<Vector2f>& vertices, const std:
     }
     file.close();
     LOG(LogLevel::INFO) << "Polygon correctly saved";
+}
+
+void Loader::SaveElementToFile(const std::vector<Vector2f>& vertices,
+                               const std::vector<std::shared_ptr<std::vector<unsigned int>>>& polygonsIndices,
+                               const std::string& fileName){
+
+    LOG(LogLevel::INFO) << "Saving element to " << fileName;
+    unsigned int numberVertices = vertices.size();
+    std::ofstream file;
+    file.open(fileName);
+    if (file.fail()){
+        LOG(LogLevel::ERROR) << "failed to open file " << fileName;
+        return;
+    }
+    file << "# number of vertices\n";
+    file << numberVertices << "\n";
+    file << "# vertices\n";
+    for (unsigned int i = 0; i < numberVertices; i++){
+        file << vertices[i].x << " " << vertices[i].y << "\n";
+    }
+    if (polygonsIndices.size() > 0){
+        file << "# number of small polygons\n";
+        unsigned int numberSmallPolygons = polygonsIndices.size();
+        file << numberSmallPolygons << "\n";
+        file << "# small polygons indices\n";
+        for (unsigned int i = 0; i < numberSmallPolygons; i++){
+            const std::vector<unsigned int>& smallIndices = *(polygonsIndices[i]);
+            for (unsigned int n = 0; n < smallIndices.size(); n++){
+                file << smallIndices[n] << " ";
+            }
+            file << "\n";
+        }
+    }
+    file.close();
+    LOG(LogLevel::INFO) << "Element correctly saved";
 }
 
 int Loader::GetNumberSmallPolygonsFromFile(const std::string& fileName){
