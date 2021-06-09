@@ -33,6 +33,7 @@ public:
     void setDebugStatus(bool what);
     void setDebugMode(const ModeApp& mode);
     void setFileNameDebug(const std::string& name);
+    void setNumberBorder(unsigned int number);
 
     void start();
 
@@ -56,6 +57,8 @@ private:
     // drawDebug draw indices on the screen
     bool drawDebug;
     float textScale;
+
+    unsigned int numberBorder;
 
     void terminate();
     void drawFillingDoubleBuffers();
@@ -96,6 +99,9 @@ private:
 
     void createElement(Element& element);
     void createMesh(Element& element);
+
+    static std::vector<std::vector<Vector2f>> GetVerticesBorders(float width, float height,
+                                                                 float borderThickX, float borderThickY);
 };
 
 #endif // CONSOLE_H

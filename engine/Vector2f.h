@@ -17,6 +17,9 @@ public:
     void operator=(const Vector2f& other);
     Vector2f operator+(const Vector2f& other) const;
     Vector2f operator-(const Vector2f& other) const;
+    void operator+=(const Vector2f& other);
+    void operator-=(const Vector2f& other);
+
     double dot(const Vector2f& other) const;
     double cross(const Vector2f& other) const;
     double normSquared() const;
@@ -25,6 +28,7 @@ public:
     static const double SOFT_TOLERANCE;
 
     static bool AreDoublesEqual(double a, double b, double tolerance = Vector2f::TOLERANCE);
+    static bool IsFirstDoubleGreater(double a, double b, double tolerance = Vector2f::TOLERANCE);
 };
 
 std::ostream& operator<< (std::ostream& ostrem, const Vector2f& point);

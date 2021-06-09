@@ -30,6 +30,8 @@
 
 #define LDEB LOG(LogLevel::DEBUG)
 #define LINF LOG(LogLevel::INFO)
+#define LWAR LOG(LogLevel::WARN)
+#define LERR LOG(LogLevel::ERROR)
 
 enum class LogLevel{
     DEBUG = 0,

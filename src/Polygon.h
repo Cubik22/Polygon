@@ -49,15 +49,22 @@ public:
     void cutInsideOutside(std::vector<std::shared_ptr<std::vector<unsigned int>>>& insideIndices,
                           std::vector<std::shared_ptr<std::vector<unsigned int>>>& outsideIndices);
 
+    void cutInsideOutsideConcave(std::vector<std::shared_ptr<std::vector<unsigned int>>>& insideIndices,
+                                 std::vector<std::shared_ptr<std::vector<unsigned int>>>& outsideIndices,
+                                 const std::vector<Vector2f>& concaveVertices, const std::vector<unsigned int>& concaveIndices,
+                                 RelativePosition relativePosition);
+
     float getWidth()  const;
     float getHeight() const;
     float getXMin()   const;
     float getYMin()   const;
 
+    static const double BIG_DOUBLE;
+
     // this function calculate the polygon area using Gauss
     static double CalculateArea(const std::vector<Vector2f>& vertices, const std::vector<unsigned int>& indices);
-
-    static const double BIG_DOUBLE;
+    // with default indices
+    static double CalculateArea(const std::vector<Vector2f>& vertices);
 
     static std::vector<Vector2f> translateVertices(const std::vector<Vector2f>& vertices, float diffX, float diffY);
     static std::shared_ptr<std::vector<Vector2f>> translateVerticesPointer(const std::vector<Vector2f>& vertices, float diffX, float diffY);
@@ -69,6 +76,12 @@ public:
                            float originalWidth, float originalHeight, float newWidth, float newHeight);
 
     static void createBoundingBoxVariables(const std::vector<Vector2f>& vertices, float& width, float& height, float& xMin, float& yMin);
+
+    static bool isPointBoundaryConcavePolygon(const Vector2f& point,
+                                              const std::vector<Vector2f>& vertices, const std::vector<unsigned int>& indices);
+
+    static bool isPointInsideConcavePolygon(const Vector2f& point,
+                                            const std::vector<Vector2f>& vertices, const std::vector<unsigned int>& indices);
 
 private:
     std::vector<Vector2f> points;
@@ -89,6 +102,10 @@ private:
     void checkEnoughPointIndices() const;
 
     bool checkIsPointIntersection(const Node* node) const;
+
+    // return a node from where it can be calculated inside/outside concave polygon,
+    // return the same node as input if all points are on boundary
+    const Node* getNodeNotBoundary(const Node* node);
 
     // this function calculate the relative orientation of the polygon with the segment
     // it is used in getNextIntersection to, given an intersection node, find wich one of the two intersection nodes closer (up and down)
@@ -117,9 +134,15 @@ private:
 
     // this is the same but is used when we want to distinguish between polygons up or below segment
     void continueSmallPolygonInsideOutside(const Node* node, const Node* initialNode,
-        RelativePosition relativePosition, std::shared_ptr<std::vector<unsigned int>> indicesPoli,
+        std::shared_ptr<std::vector<unsigned int>> indicesPoliPoi,
         std::vector<std::shared_ptr<std::vector<unsigned int>>>& insidePolygonsIndices,
         std::vector<std::shared_ptr<std::vector<unsigned int>>>& outsidePolygonsIndices);
+
+    void continueSmallPolygonInsideOutsideConcave(const Node* node, const Node* initialNode,
+        std::shared_ptr<std::vector<unsigned int>> indicesPoliPoi,
+        std::vector<std::shared_ptr<std::vector<unsigned int>>>& insidePolygonsIndices,
+        std::vector<std::shared_ptr<std::vector<unsigned int>>>& outsidePolygonsIndices,
+        const std::vector<Vector2f>& concaveVertices, const std::vector<unsigned int>& concaveIndices);
 };
 
 #endif //POLYGON_H

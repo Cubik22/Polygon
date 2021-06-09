@@ -42,11 +42,14 @@ public:
     const std::vector<std::shared_ptr<std::vector<unsigned int>>>& getIndices() const;
 
     std::vector<IndicesElement> cut();
+    std::vector<IndicesElement> cutConcave();
 
     static void setDebugMode(bool mode);
 
     static void setXDebug(unsigned int _xDebug);
     static void setYDebug(unsigned int _yDebug);
+
+    static void setForceConcave(bool mode);
 
 private:
     std::vector<std::shared_ptr<std::vector<Vector2f>>> vertices;
@@ -70,7 +73,7 @@ private:
     const unsigned int numberPolygons;
 
     IndicesElement cutElement(std::vector<Vector2f>& verticesElement,
-                              const std::vector<std::shared_ptr<std::vector<unsigned int>>>& startIndices);
+                              const std::vector<std::shared_ptr<std::vector<unsigned int>>>& startIndices, bool concave = false);
 
     std::vector<Vector2f>& getVerticesPrivate(unsigned int x, unsigned int y) const;
     std::vector<Vector2f>& getVerticesPrivate(unsigned int i) const;
@@ -79,6 +82,8 @@ private:
 
     static unsigned int xDebug;
     static unsigned int yDebug;
+
+    static bool forceConcave;
 };
 
 #endif // MESH_H

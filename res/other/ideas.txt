@@ -1,0 +1,53 @@
+// idea to separete between inside and outside after all are added
+IndicesElement Mesh::cutElementConcave(std::vector<Vector2f>& verticesElement,
+                                       const std::vector<std::shared_ptr<std::vector<unsigned int>>>& startIndices){
+
+    unsigned int numberVerticesBorder = verticesBorder.size();
+    std::vector<unsigned int> indicesBorder;
+    for (unsigned int i = 0; i < numberVerticesBorder; i++){
+        indicesBorder.push_back(i);
+    }
+
+    std::shared_ptr<std::vector<std::shared_ptr<std::vector<unsigned int>>>> totalIndices =
+                    std::make_shared<std::vector<std::shared_ptr<std::vector<unsigned int>>>>();
+    std::shared_ptr<std::vector<std::shared_ptr<std::vector<unsigned int>>>> indicesInside =
+                    std::make_shared<std::vector<std::shared_ptr<std::vector<unsigned int>>>>();
+    std::shared_ptr<std::vector<std::shared_ptr<std::vector<unsigned int>>>> indicesOutside =
+                    std::make_shared<std::vector<std::shared_ptr<std::vector<unsigned int>>>>();
+
+    for (unsigned int i = 0; i < numberPolygons; i++){
+        Polygon poly = Polygon(verticesElement, *(startIndices[i]));
+        poly.setSegment(verticesBorder[numberVerticesBorder - 1], verticesBorder[0]);
+//        poly.setSegment(verticesBorder[0], verticesBorder[1]);
+        poly.createNetworkMesh(verticesElement);
+        //printElement(verticesElement);
+        poly.cutIndices(*totalIndices);
+    }
+
+    if (true){
+//    for (unsigned int n = 1; n < 2; n++){
+        for (unsigned int n = 0; n < numberVerticesBorder - 1; n++){
+            std::shared_ptr<std::vector<std::shared_ptr<std::vector<unsigned int>>>> tmpTotalIndices =
+                            std::make_shared<std::vector<std::shared_ptr<std::vector<unsigned int>>>>();
+            unsigned int numberTotalIndices = indicesInside->size();
+
+            for (unsigned int i = 0; i < numberTotalIndices; i++){
+                Polygon poly = Polygon(verticesElement, *((*totalIndices)[i]));
+                poly.setSegment(verticesBorder[n], verticesBorder[n + 1]);
+                poly.createNetworkMesh(verticesElement);
+                //poly.createNetwork();
+                poly.cutIndices(*tmpTotalIndices);
+
+            }
+            totalIndices = tmpTotalIndices;
+        }
+    }
+
+    // TODO
+//    for (unsigned int i = 0; i < totalIndices->size(); i++){
+//        const std::vector<unsigned int>& indices = *((*totalIndices)[i]);
+
+//    }
+
+    return {indicesInside, indicesOutside};
+}

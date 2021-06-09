@@ -34,6 +34,15 @@ void Console::setFileNameDebug(const std::string& name){
     fileNameDebug = name;
 }
 
+void Console::setNumberBorder(unsigned int number){
+    if (number >= GetVerticesBorders(0, 0, 0, 0).size()){
+        LOG(LogLevel::WARN) << "number too big";
+        numberBorder = 0;
+    } else{
+        numberBorder = number;
+    }
+}
+
 void Console::start(){
     if (!debug){
         askModeApp();
@@ -55,7 +64,7 @@ void Console::start(){
             drawSegment();
         }
         drawCuttedPolygon();
-        drawBox();
+//        drawBox();
 //        drawGrid();
 //        moveAround();
     } else if (mode == ModeApp::Mesh){
@@ -318,8 +327,34 @@ void Console::askNumberPolygonMesh(){
     std::stringstream convert;
 
     while (true){
+        std::cout << "Choose the polygon inside the mesh\n";
+        std::cout << "Insert 1 for convex, 2 for concave: ";
+        std::getline(std::cin, consoleString);
+
+        unsigned int num = 0;
+
+        convert.str(consoleString);
+        convert >> num;
+        if (convert.fail()){
+            LOG(LogLevel::WARN) << "Please insert a valid number";
+            convert.clear();
+            continue;
+        }
+        convert.clear();
+
+        if (num != 1 && num != 2){
+            LOG(LogLevel::WARN) << "You inserted a wrong number, please try again";
+            continue;
+        }
+        numberBorder = num - 1;
+        break;
+    }
+
+    LOG::NewLine();
+
+    while (true){
         std::cout << "Choose the number of polygons you want on the x axis\n";
-        std::cout << "Please insert a number between 1 and 20: ";
+        std::cout << "Insert a number between 1 and 20: ";
         std::getline(std::cin, consoleString);
 
         unsigned int xNum = 0;
@@ -700,21 +735,25 @@ void Console::createElement(Element& element){
 }
 
 void Console::createMesh(Element& element){
+    drawDebug = false;
+
     renderer->removeAllShapes();
 
-    float thickDownLeft = 0.2;
-    float thickUpRight  = 0.3;
-    const std::vector<Vector2f> verticesBorder = {
-        {0.0, -1 + thickDownLeft}, {1 - thickUpRight, 0.0}, {0.0, 1 - thickUpRight}, {-1 + thickDownLeft, 0.0}
-    };
-    float remaining = 2 - 2 * thickDownLeft;
+    float windowBorder = 0.2f;
+    float thickBorder  = 0.1f;
+
+    float remaining = 2 - 2 * windowBorder;
 
     float elemenWidth = remaining / numberX;
     float elementHeight = remaining / numberY;
 
-    std::vector<float> color = Renderer::getColor(RendColor::Yellow);
+    const std::vector<std::vector<Vector2f>> verticesBorders = GetVerticesBorders(remaining, remaining, thickBorder, thickBorder);
+
+    const std::vector<Vector2f>& verticesBorder = verticesBorders[numberBorder];
+
+    std::vector<float> yellow = Renderer::getColor(RendColor::Yellow);
     Shape* shapeNuova = new Shape(verticesBorder, GeometricPrimitive::LinePointClosed,
-                                  color[0], color[1], color[2]);
+                                  yellow[0], yellow[1], yellow[2]);
     renderer->addShape(shapeNuova);
 
 //    unsigned int numberX = 2;
@@ -736,14 +775,12 @@ void Console::createMesh(Element& element){
         }
     }
     drawNoInput(mesh.getAllVertices(), indices);
-    while (renderer->getNumberShapes() > 1){
-        renderer->removeLastShape();
-    }
+    renderer->removeAllShapes();
 
     std::vector<float> colorInside = Renderer::getColor(RendColor::Green);
     std::vector<float> colorOutside = Renderer::getColor(RendColor::Red);
 
-    std::vector<IndicesElement> indicesElement = mesh.cut();
+    std::vector<IndicesElement> indicesElement = numberBorder == 0 ? mesh.cut() : mesh.cutConcave();
 
 //    for (unsigned int i = 1; i < 2; i++){
     for (unsigned int i = 0; i < indicesElement.size(); i++){
@@ -774,6 +811,46 @@ void Console::createMesh(Element& element){
         }
     }
 
+    Shape* shapeBorder = new Shape(verticesBorder, GeometricPrimitive::LinePointClosed,
+                                  yellow[0], yellow[1], yellow[2]);
+    renderer->addShape(shapeBorder);
+
     drawNoInput(mesh.getAllVertices(), indicesElement);
-//    drawNoInput(mesh.getVertices(1), indicesElement[1]);
+    //    drawNoInput(mesh.getVertices(1), indicesElement[1]);
+}
+
+std::vector<std::vector<Vector2f>> Console::GetVerticesBorders(float width, float height, float borderThickX, float borderThickY){
+    float halfWidth  = width  / 2.0f;
+    float halfHeight = height / 2.0f;
+
+    float quarterWidth  = halfWidth  / 2.0f;
+    float quarterHeight = halfHeight / 2.0f;
+
+//    float eightWidth  = quarterWidth  / 2.0f;
+    float eightHeight = quarterHeight / 2.0f;
+
+    std::vector<std::vector<Vector2f>> result = {
+        {   {halfWidth, 0.0f},
+            {width - borderThickX, halfHeight},
+            {halfWidth, height - borderThickY},
+            {0.0f, halfHeight}
+        },
+        {   {quarterWidth, 0.0f},
+            {halfWidth, halfHeight - eightHeight},
+            {width - quarterWidth, eightHeight},
+            {width - borderThickX, halfHeight},
+            {width - quarterWidth, height - borderThickY},
+            {halfWidth, halfHeight + eightHeight},
+            {quarterWidth, height - eightHeight},
+            {0.0f, halfHeight}
+        }
+    };
+
+    for (std::vector<Vector2f>& arrayVec : result){
+        for (Vector2f& vec : arrayVec){
+            vec -= {halfWidth, halfHeight};
+        }
+    }
+
+    return result;
 }

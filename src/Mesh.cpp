@@ -118,12 +118,23 @@ std::vector<IndicesElement> Mesh::cut(){
     return elements;
 }
 
+std::vector<IndicesElement> Mesh::cutConcave(){
+    std::vector<IndicesElement> elements;
+    for (unsigned int i = 0; i < numberElements; i++){
+        elements.push_back(cutElement(getVerticesPrivate(i), indices, true));
+        //std::cout << "finito x: " << x << " y: " << y << "\n";
+    }
+    return elements;
+}
+
 // STATIC
 
 bool Mesh::debug = false;
 
 unsigned int Mesh::xDebug = 0;
 unsigned int Mesh::yDebug = 0;
+
+bool Mesh::forceConcave = false;
 
 void Mesh::setDebugMode(bool mode){
     debug = mode;
@@ -135,6 +146,10 @@ void Mesh::setXDebug(unsigned int xD){
 
 void Mesh::setYDebug(unsigned int yD){
     yDebug = yD;
+}
+
+void Mesh::setForceConcave(bool mode){
+    forceConcave = mode;
 }
 
 // PRIVATE
@@ -154,20 +169,32 @@ void printIndices(std::vector<unsigned int>& indices){
 }
 
 IndicesElement Mesh::cutElement(std::vector<Vector2f>& verticesElement,
-                                const std::vector<std::shared_ptr<std::vector<unsigned int>>>& startIndices){
+                                const std::vector<std::shared_ptr<std::vector<unsigned int>>>& startIndices, bool concave){
+    if (Mesh::forceConcave == true){
+        concave = true;
+    }
     unsigned int numberVerticesBorder = verticesBorder.size();
+    std::vector<unsigned int> indicesBorder;
+    for (unsigned int i = 0; i < numberVerticesBorder; i++){
+        indicesBorder.push_back(i);
+    }
 
     std::shared_ptr<std::vector<std::shared_ptr<std::vector<unsigned int>>>> indicesInside =
                     std::make_shared<std::vector<std::shared_ptr<std::vector<unsigned int>>>>();
     std::shared_ptr<std::vector<std::shared_ptr<std::vector<unsigned int>>>> indicesOutside =
                     std::make_shared<std::vector<std::shared_ptr<std::vector<unsigned int>>>>();
+
     for (unsigned int i = 0; i < numberPolygons; i++){
         Polygon poly = Polygon(verticesElement, *(startIndices[i]));
         poly.setSegment(verticesBorder[numberVerticesBorder - 1], verticesBorder[0]);
 //        poly.setSegment(verticesBorder[0], verticesBorder[1]);
         poly.createNetworkMesh(verticesElement);
         //printElement(verticesElement);
-        poly.cutInsideOutside(*indicesInside, *indicesOutside);
+        if (!concave){
+            poly.cutInsideOutside(*indicesInside, *indicesOutside);
+        } else{
+            poly.cutInsideOutsideConcave(*indicesInside, *indicesOutside, verticesBorder, indicesBorder, RelativePosition::Parallel);
+        }
     }
 
 //    std::cout << "OUTSIDE INDICES\n";
@@ -179,30 +206,43 @@ IndicesElement Mesh::cutElement(std::vector<Vector2f>& verticesElement,
 //        std::cout << "\n";
 //    }
 
+    if (true){
 //    for (unsigned int n = 1; n < 2; n++){
-    for (unsigned int n = 0; n < numberVerticesBorder - 1; n++){
-        std::shared_ptr<std::vector<std::shared_ptr<std::vector<unsigned int>>>> tmpIndicesInside =
-                        std::make_shared<std::vector<std::shared_ptr<std::vector<unsigned int>>>>();
-        std::shared_ptr<std::vector<std::shared_ptr<std::vector<unsigned int>>>> tmpIndicesOutside =
-                        std::make_shared<std::vector<std::shared_ptr<std::vector<unsigned int>>>>();
-        unsigned int numberIndicesInside = indicesInside->size();
-        unsigned int numberIndicesOutside = indicesOutside->size();
-        for (unsigned int i = 0; i < numberIndicesInside; i++){
-            Polygon poly = Polygon(verticesElement, *((*indicesInside)[i]));
-            poly.setSegment(verticesBorder[n], verticesBorder[n + 1]);
-            poly.createNetworkMesh(verticesElement);
-            poly.cutInsideOutside(*tmpIndicesInside, *tmpIndicesOutside);
-        }
+        for (unsigned int n = 0; n < numberVerticesBorder - 1; n++){
+            std::shared_ptr<std::vector<std::shared_ptr<std::vector<unsigned int>>>> tmpIndicesInside =
+                            std::make_shared<std::vector<std::shared_ptr<std::vector<unsigned int>>>>();
+            std::shared_ptr<std::vector<std::shared_ptr<std::vector<unsigned int>>>> tmpIndicesOutside =
+                            std::make_shared<std::vector<std::shared_ptr<std::vector<unsigned int>>>>();
+            unsigned int numberIndicesInside = indicesInside->size();
+            unsigned int numberIndicesOutside = indicesOutside->size();
+            for (unsigned int i = 0; i < numberIndicesInside; i++){
+                Polygon poly = Polygon(verticesElement, *((*indicesInside)[i]));
+                poly.setSegment(verticesBorder[n], verticesBorder[n + 1]);
+                poly.createNetworkMesh(verticesElement);
+                if (!concave){
+                    poly.cutInsideOutside(*tmpIndicesInside, *tmpIndicesOutside);
+                } else{
+                    poly.cutInsideOutsideConcave(*tmpIndicesInside, *tmpIndicesOutside,
+                                                 verticesBorder, indicesBorder, RelativePosition::Positive);
+                }
 
-        for (unsigned int i = 0; i < numberIndicesOutside; i++){
-            Polygon poly = Polygon(verticesElement, *((*indicesOutside)[i]));
-            poly.setSegment(verticesBorder[n], verticesBorder[n + 1]);
-            poly.createNetworkMesh(verticesElement);
-            //poly.createNetwork();
-            poly.cutIndices(*tmpIndicesOutside);
+            }
+
+            for (unsigned int i = 0; i < numberIndicesOutside; i++){
+                Polygon poly = Polygon(verticesElement, *((*indicesOutside)[i]));
+                poly.setSegment(verticesBorder[n], verticesBorder[n + 1]);
+                poly.createNetworkMesh(verticesElement);
+                //poly.createNetwork();
+                if (!concave){
+                    poly.cutIndices(*tmpIndicesOutside);
+                } else{
+                    poly.cutInsideOutsideConcave(*tmpIndicesInside, *tmpIndicesOutside,
+                                                 verticesBorder, indicesBorder, RelativePosition::Negative);
+                }
+            }
+            indicesInside = tmpIndicesInside;
+            indicesOutside = tmpIndicesOutside;
         }
-        indicesInside = tmpIndicesInside;
-        indicesOutside = tmpIndicesOutside;
     }
     //std::cout << "number of vertices: " << verticesElement.size() << "\n";
     return {indicesInside, indicesOutside};

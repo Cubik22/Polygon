@@ -426,7 +426,7 @@ void Polygon::cutInsideOutside(std::vector<std::shared_ptr<std::vector<unsigned 
         }
         startNode->touched = true;
         LOG(LogLevel::INFO) << startNode->getIndex() << " starting the cut";
-        continueSmallPolygonInsideOutside(startNode, startNode, RelativePosition::Parallel, nullptr, insideIndices, outsideIndices);
+        continueSmallPolygonInsideOutside(startNode, startNode, nullptr, insideIndices, outsideIndices);
     } else{
         if (!firstNode || firstNode == nullptr){
             LOG(LogLevel::ERROR) << "first node is nullptr";
@@ -451,6 +451,59 @@ void Polygon::cutInsideOutside(std::vector<std::shared_ptr<std::vector<unsigned 
     }
 }
 
+void Polygon::cutInsideOutsideConcave(std::vector<std::shared_ptr<std::vector<unsigned int>>>& insideIndices,
+                                      std::vector<std::shared_ptr<std::vector<unsigned int>>>& outsideIndices,
+                                      const std::vector<Vector2f>& concaveVertices, const std::vector<unsigned int>& concaveIndices,
+                                      RelativePosition relativePosition){
+    orientation = RelativePosition::Positive;
+    if (startNode && numberIntersections > 0){
+        if (!startNode || startNode == nullptr){
+            LOG(LogLevel::ERROR) << "Start node is nullptr and number of intersection is > 0";
+            return;
+        }
+        startNode->touched = true;
+        LOG(LogLevel::INFO) << startNode->getIndex() << " starting the cut";
+        continueSmallPolygonInsideOutsideConcave(startNode, startNode, nullptr,
+                                                 insideIndices, outsideIndices, concaveVertices, concaveIndices);
+    } else{
+        if (!firstNode || firstNode == nullptr){
+            LOG(LogLevel::ERROR) << "first node is nullptr";
+            return;
+        }
+
+        if (relativePosition == RelativePosition::Positive){
+            insideIndices.push_back(std::make_shared<std::vector<unsigned int>>(indices));
+        } else if (relativePosition == RelativePosition::Negative){
+            outsideIndices.push_back(std::make_shared<std::vector<unsigned int>>(indices));
+        } else{
+            bool allBoundary = false;
+            unsigned int correctIndex = 0;
+
+            const std::vector<unsigned int>& indicesPoli = indices;
+            unsigned int sizeIndicesPoli = indicesPoli.size();
+            for (unsigned int i = 0; i < sizeIndicesPoli; i++){
+                if (!isPointBoundaryConcavePolygon(points[indicesPoli[i]], concaveVertices, concaveIndices)){
+                    correctIndex = i;
+                    break;
+                }
+                if (i == sizeIndicesPoli - 1){
+                    allBoundary = true;
+                }
+            }
+
+            const Vector2f& point = points[indicesPoli[correctIndex]];
+            if (allBoundary){
+                LOG(LogLevel::INFO) << "Polygon::continueSmallPolygonInsideOutsideConcave: all points are boundary concave polygon";
+                insideIndices.push_back(std::make_shared<std::vector<unsigned int>>(indices));
+            } else if (isPointInsideConcavePolygon(point, concaveVertices, concaveIndices)){
+                insideIndices.push_back(std::make_shared<std::vector<unsigned int>>(indices));
+            } else{
+                outsideIndices.push_back(std::make_shared<std::vector<unsigned int>>(indices));
+            }
+        }
+    }
+}
+
 float Polygon::getWidth() const{
     return width;
 }
@@ -467,6 +520,10 @@ float Polygon::getYMin() const{
     return yMin;
 }
 
+// STATIC
+
+const double Polygon::BIG_DOUBLE = 1.0E+10;
+
 double Polygon::CalculateArea(const std::vector<Vector2f>& vertices, const std::vector<unsigned int>& indices){
     double sum = 0;
 
@@ -478,9 +535,16 @@ double Polygon::CalculateArea(const std::vector<Vector2f>& vertices, const std::
     return abs(sum) / 2;
 }
 
-// STATIC
+double Polygon::CalculateArea(const std::vector<Vector2f>& vertices){
+    double sum = 0;
 
-const double Polygon::BIG_DOUBLE = 1.0E+10;
+    unsigned int sizeVertices = vertices.size();
+    for (unsigned int i = 0; i < sizeVertices; i++){
+        sum += vertices[i].x                        * vertices[(i + 1) % sizeVertices].y -
+               vertices[(i + 1) % sizeVertices].x   * vertices[i].y;
+    }
+    return abs(sum) / 2;
+}
 
 std::vector<Vector2f> Polygon::translateVertices(const std::vector<Vector2f>& vertices, float diff_x, float diff_y)
 {
@@ -556,6 +620,102 @@ void Polygon::createBoundingBoxVariables(const std::vector<Vector2f>& vertices, 
     height = top - bottom;
     xMin = left;
     yMin = bottom;
+}
+
+bool Polygon::isPointBoundaryConcavePolygon(const Vector2f& point,
+                                            const std::vector<Vector2f>& vertices, const std::vector<unsigned int>& indices){
+    Intersector inter;
+    const unsigned int sizeIndices = indices.size();
+    for (unsigned int i = 0; i < sizeIndices; i++){
+        if (point == vertices[indices[i]] || point == vertices[indices[(i + 1) % sizeIndices]]){
+            return true;
+        }
+        inter.setSegment1(vertices[indices[i]], vertices[indices[(i + 1) % sizeIndices]]);
+        inter.setSegment2(vertices[indices[i]], point);
+        if (inter.calculateRelativePosition() == RelativePosition::Parallel){
+            const Vector2f diffVertices = vertices[indices[(i + 1) % sizeIndices]] - vertices[indices[i]];
+            const Vector2f diffIntersection = point - vertices[indices[i]];
+            if (diffVertices.dot(diffIntersection) > 0.0 &&
+                Vector2f::IsFirstDoubleGreater(diffVertices.normSquared(), diffIntersection.normSquared())){
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool Polygon::isPointInsideConcavePolygon(const Vector2f& point,
+                                          const std::vector<Vector2f>& vertices, const std::vector<unsigned int>& indices){
+    unsigned int numberPositive = 0;
+    unsigned int numberNegative = 0;
+
+    const Vector2f& firstVector = {1, 1};
+
+    if (point == firstVector){
+        LOG(LogLevel::WARN) << "Polygon::isPointInsideConcavePolygon: point is on vertex";
+        return true;
+    }
+
+    Intersector inter;
+
+    inter.setSegment1(point, firstVector);
+
+    const Vector2f reference = firstVector - point;
+
+    unsigned int sizeIndices = indices.size();
+    for (unsigned int i = 0; i < sizeIndices; i++){
+        inter.setSegment2(vertices[indices[i]], vertices[indices[(i + 1) % sizeIndices]]);
+
+        LineSegmentIntersection lineSegmentIntersection = inter.calculateLineSegmentIntersection();
+
+//        if (lineSegmentIntersection == LineSegmentIntersection::Parallel){
+//            LOG(LogLevel::WARN) << "line parallel";
+//        }
+
+        bool insideSegment = lineSegmentIntersection == LineSegmentIntersection::InsideSegment;
+        bool secondVertex = lineSegmentIntersection == LineSegmentIntersection::SecondVertex;
+        if (insideSegment || secondVertex){
+            const Vector2f intersectionPoint = inter.getIntersectionPoint();
+            const Vector2f difference = intersectionPoint - point;
+
+            double dot = reference.dot(difference);
+
+            // check that intersection point is not isolated
+            if (secondVertex){
+                inter.setSegment2(intersectionPoint, vertices[indices[i]]);
+                RelativePosition beforeRelPos = inter.calculateRelativePosition();
+                inter.setSegment2(intersectionPoint, vertices[indices[(i + 2) % sizeIndices]]);
+                RelativePosition afterRelPos = inter.calculateRelativePosition();
+
+                if (beforeRelPos == afterRelPos ||
+                    beforeRelPos == RelativePosition::Parallel || afterRelPos == RelativePosition::Parallel){
+                    continue;
+                }
+            }
+
+            if (Vector2f::AreDoublesEqual(dot, 0.0)){
+                LOG(LogLevel::ERROR) << "dot is 0";
+            } else if (dot > 0){
+                numberPositive++;
+            } else if (dot < 0){
+                numberNegative++;
+            }
+        }
+    }
+
+    bool positiveEven = (numberPositive % 2) == 0;
+    bool negativeEven = (numberNegative % 2) == 0;
+
+//    LOG(LogLevel::INFO) << "number positive: " << numberPositive << " number negative: " << numberNegative << std::endl;
+
+    if (positiveEven && negativeEven){
+        return false;
+    } else if (!positiveEven && !negativeEven){
+        return true;
+    } else{
+        LOG(LogLevel::WARN) << "odd intersections";
+        return false;
+    }
 }
 
 // PRIVATE
@@ -689,7 +849,7 @@ void Polygon::continueSmallPolygon(const Node* node, const Node* initialNode, st
         // we check that we don't add the same index two times
         // this happens very rarely, when there are a lot of vertices on the borders
         if (now == previous){
-            LOG(LogLevel::WARN) << "Same index as node before";
+            LOG(LogLevel::WARN) << now << " same index as node before";
         } else{
             indicesPoli.push_back(node->getIndex());
         }
@@ -738,7 +898,7 @@ void Polygon::continueSmallPolygon(const Node* node, const Node* initialNode, st
 }
 
 void Polygon::continueSmallPolygonInsideOutside(const Node* node, const Node* initialNode,
-    RelativePosition relativePosition, std::shared_ptr<std::vector<unsigned int>> indicesPoliPoi,
+    std::shared_ptr<std::vector<unsigned int>> indicesPoliPoi,
     std::vector<std::shared_ptr<std::vector<unsigned int>>>& insidePolygonsIndices,
     std::vector<std::shared_ptr<std::vector<unsigned int>>>& outsidePolygonsIndices){
 
@@ -746,10 +906,10 @@ void Polygon::continueSmallPolygonInsideOutside(const Node* node, const Node* in
     // becuse we are starting from an intersection point, if we not change it we will never enter in the while loop
     // we have to decide if the new small polygon is inside or outside
 
-    Intersector inter;
-
-    if (relativePosition == RelativePosition::Parallel){
+    if (indicesPoliPoi == nullptr){
+        Intersector inter;
         Node* tryNode = node->next;
+        RelativePosition relativePosition = RelativePosition::Parallel;
         while (relativePosition == RelativePosition::Parallel && tryNode != node){
             // here we compute the intersection with the two points in order to find if we are arrived at an intersection point
             Intersector inter;
@@ -781,9 +941,6 @@ void Polygon::continueSmallPolygonInsideOutside(const Node* node, const Node* in
     indicesPoli.push_back(node->getIndex());
     node = node->next;
 
-    inter.setSegment1(p1, points[node->getIndex()]);
-    inter.setSegment2(p2, points[node->getIndex()]);
-
     // we loop and add the nodes while we are not at an intersection node
     unsigned int previous = node->previous->getIndex();
     unsigned int now;
@@ -792,7 +949,7 @@ void Polygon::continueSmallPolygonInsideOutside(const Node* node, const Node* in
         // we check that we don't add the same index two times
         // this happens very rarely, when there are a lot of vertices on the borders
         if (now == previous){
-            LOG(LogLevel::WARN) << "Same index as node before";
+            LOG(LogLevel::WARN) << now << " same index as node before";
         } else{
             indicesPoli.push_back(node->getIndex());
         }
@@ -828,16 +985,129 @@ void Polygon::continueSmallPolygonInsideOutside(const Node* node, const Node* in
             LOG(LogLevel::INFO) << node->getIndex() << " continue samll polygon";
             // first we continue the small polygon we are creating
 
-            continueSmallPolygonInsideOutside(node, initialNode, relativePosition, indicesPoliPoi,
+            continueSmallPolygonInsideOutside(node, initialNode, indicesPoliPoi,
                                               insidePolygonsIndices, outsidePolygonsIndices);
         }
         // here we create a new small polygon
         LOG(LogLevel::INFO) << nodeCreation->getIndex() << " create samll polygon";
 
         // we add a new array to the big array of arrays
-        continueSmallPolygonInsideOutside(nodeCreation, nodeCreation, RelativePosition::Parallel, nullptr,
+        continueSmallPolygonInsideOutside(nodeCreation, nodeCreation, nullptr,
                                           insidePolygonsIndices, outsidePolygonsIndices);
     } else{
         LOG(LogLevel::INFO) << node->getIndex() << " is already touched";
+    }
+}
+
+void Polygon::continueSmallPolygonInsideOutsideConcave(const Node* node, const Node* initialNode,
+    std::shared_ptr<std::vector<unsigned int>> indicesPoliPoi,
+    std::vector<std::shared_ptr<std::vector<unsigned int>>>& insidePolygonsIndices,
+    std::vector<std::shared_ptr<std::vector<unsigned int>>>& outsidePolygonsIndices,
+    const std::vector<Vector2f>& concaveVertices, const std::vector<unsigned int>& concaveIndices){
+
+    bool closing = false;
+
+    if (indicesPoliPoi == nullptr){
+        indicesPoliPoi = std::make_shared<std::vector<unsigned int>>();
+    }
+
+    if (!indicesPoliPoi || indicesPoliPoi == nullptr){
+        LOG(LogLevel::ERROR) << "indices poli pointer is nullptr";
+        return;
+    }
+    std::vector<unsigned int>& indicesPoli = *indicesPoliPoi;
+
+    // first we add the node we currently are at to the list of indices of the small polygon
+    indicesPoli.push_back(node->getIndex());
+    node = node->next;
+
+    // we loop and add the nodes while we are not at an intersection node
+    unsigned int previous = node->previous->getIndex();
+    unsigned int now;
+    while (!node->isIntersection() && node != initialNode) {
+        now = node->getIndex();
+        // we check that we don't add the same index two times
+        // this happens very rarely, when there are a lot of vertices on the borders
+        if (now == previous){
+            LOG(LogLevel::WARN) << now << " same index as node before";
+        } else{
+            indicesPoli.push_back(node->getIndex());
+        }
+        previous = now;
+        LOG(LogLevel::INFO) << "at " << node->getIndex();
+        node = node->next;
+    }
+
+    LOG(LogLevel::INFO) << node->getIndex() << " arrived";
+
+    // if the node we are arrived at is the starting node, we are finished, the small polygon is closed
+    indicesPoli.push_back(node->getIndex());
+
+    if (node == initialNode){
+        // it happens very rarely when there are two intersection one after the other in really complex polygons
+        LOG(LogLevel::WARN) << node->getIndex() << " closing polygon other way";
+    }
+    if (!node->touched){
+        LOG(LogLevel::INFO) << node->getIndex() << " is not already touched";
+        node->touched = true;
+        const Node* nodeCreation = node;
+        node = getNextIntersection(node);
+        if (node == nullptr){
+            LOG(LogLevel::ERROR) << "getNextIntersection returned nullptr";
+            return;
+        }
+        // here is where we will close the polygon
+        if (node == initialNode){
+            LOG(LogLevel::INFO) << node->getIndex() << " closing polygon";
+        }
+        // in the past: sometimes getNextIntersection returns a nullptr,
+        // this happens very rarely when there are a lot of points and intersections
+        // and intersector thinks that certain lines are parallel when in reality are not
+        // now it is solved because we no longer loop until relative position change but until we reach an intersection node
+        if (node != initialNode){
+            node->touched = true;
+            LOG(LogLevel::INFO) << node->getIndex() << " continue samll polygon";
+            // first we continue the small polygon we are creating
+
+            continueSmallPolygonInsideOutsideConcave(node, initialNode, indicesPoliPoi,
+                                              insidePolygonsIndices, outsidePolygonsIndices, concaveVertices, concaveIndices);
+        } else{
+            closing = true;
+        }
+        // here we create a new small polygon
+        LOG(LogLevel::INFO) << nodeCreation->getIndex() << " create samll polygon";
+
+        // we add a new array to the big array of arrays
+        continueSmallPolygonInsideOutsideConcave(nodeCreation, nodeCreation, nullptr,
+                                          insidePolygonsIndices, outsidePolygonsIndices, concaveVertices, concaveIndices);
+    } else{
+        LOG(LogLevel::INFO) << node->getIndex() << " is already touched";
+        closing = true;
+    }
+    if (closing){
+        // we decide if the polygon is inside or outside
+        bool allBoundary = false;
+        unsigned int correctIndex = 0;
+
+        unsigned int sizeIndicesPoli = indicesPoli.size();
+        for (unsigned int i = 0; i < sizeIndicesPoli; i++){
+            if (!isPointBoundaryConcavePolygon(points[indicesPoli[i]], concaveVertices, concaveIndices)){
+                correctIndex = i;
+                break;
+            }
+            if (i == sizeIndicesPoli - 1){
+                allBoundary = true;
+            }
+        }
+
+        const Vector2f& point = points[indicesPoli[correctIndex]];
+        if (allBoundary){
+            LOG(LogLevel::INFO) << "Polygon::continueSmallPolygonInsideOutsideConcave: all points are boundary concave polygon";
+            insidePolygonsIndices.push_back(indicesPoliPoi);
+        } else if (isPointInsideConcavePolygon(point, concaveVertices, concaveIndices)){
+            insidePolygonsIndices.push_back(indicesPoliPoi);
+        } else{
+            outsidePolygonsIndices.push_back(indicesPoliPoi);
+        }
     }
 }

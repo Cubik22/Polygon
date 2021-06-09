@@ -24,6 +24,16 @@ Vector2f Vector2f::operator-(const Vector2f &other) const{
     return {x - other.x, y - other.y};
 }
 
+void Vector2f::operator+=(const Vector2f& other){
+    x += other.x;
+    y += other.y;
+}
+
+void Vector2f::operator-=(const Vector2f& other){
+    x -= other.x;
+    y -= other.y;
+}
+
 double Vector2f::dot(const Vector2f& other) const{
     return x * other.x + y * other.y;
 }
@@ -38,10 +48,14 @@ double Vector2f::normSquared() const{
 
 const double Vector2f::TOLERANCE = 1.0E-5;
 
-const double Vector2f::SOFT_TOLERANCE = 1.0E-2;
+const double Vector2f::SOFT_TOLERANCE = 1.0E-3;
 
 bool Vector2f::AreDoublesEqual(double a, double b, double tolerance){
     return abs(a - b) < tolerance;
+}
+
+bool Vector2f::IsFirstDoubleGreater(double a, double b, double tolerance){
+    return a > b + tolerance;
 }
 
 std::ostream& operator<< (std::ostream& ostrem, const Vector2f& point){
