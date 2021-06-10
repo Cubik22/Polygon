@@ -9,6 +9,7 @@ class Element{
 
 public:
     Element(const Polygon& _poly);
+    Element(const std::vector<Vector2f>& _points, const std::vector<unsigned int>& _indices);
 
     Element(const Element&)                 = delete;
     Element(Element&&) noexcept             = delete;
@@ -20,7 +21,7 @@ public:
     const std::vector<Vector2f>& getPoints() const;
     const std::vector<std::shared_ptr<std::vector<unsigned int>>>& getPolygonsIndices() const;
 
-    const std::vector<unsigned int> getStartingInidices() const;
+    const std::vector<unsigned int> getStartingIndices() const;
 
     float getWidth() const;
     float getHeight() const;
@@ -31,7 +32,9 @@ public:
     static const double TOLERANCE;
 
 private:
+    // l'array a cui si aggiungono poi i punti successivi
     std::vector<Vector2f> points;
+    // l'array dei punti di partenza
     std::vector<Vector2f> vertices;
     std::vector<unsigned int> indices;
     std::vector<std::shared_ptr<std::vector<unsigned int>>> polygonsIndices;

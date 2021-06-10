@@ -10,8 +10,13 @@
 #define X_CONSIDER  true
 #define Y_CONSIDER  false
 
-Element::Element(const Polygon& _poly) : points(_poly.getPoints()), vertices(_poly.getPoints()), indices(_poly.getIndices()),
+Element::Element(const Polygon& _poly) :
+    points(_poly.getPoints()), vertices(_poly.getPoints()), indices(_poly.getIndices()),
     numberStartIndices{_poly.getNumberIndices()}, numberAddedVertices{0}, created{false} {}
+
+Element::Element(const std::vector<Vector2f>& _points, const std::vector<unsigned int>& _indices) :
+    points(_points), vertices(_points), indices(_indices),
+    numberStartIndices{(unsigned int)_indices.size()}, numberAddedVertices{0}, created{false} {}
 
 const std::vector<std::shared_ptr<std::vector<unsigned int>>>& Element::createElement(){
 //    LOG(LogLevel::DEBUG) << "started creating element";
@@ -61,7 +66,7 @@ const std::vector<std::shared_ptr<std::vector<unsigned int>>>& Element::getPolyg
     return polygonsIndices;
 }
 
-const std::vector<unsigned int> Element::getStartingInidices() const{
+const std::vector<unsigned int> Element::getStartingIndices() const{
     return indices;
 }
 
@@ -84,8 +89,6 @@ float Element::getYMin() const{
 const double Element::TOLERANCE = 1.0E-4;
 
 void Element::createBoundingBox(){
-    //const std::vector<Vector2f>& vertices = poi
-
     std::vector<unsigned int> indicesRight  = {0};
     std::vector<unsigned int> indicesLeft   = {0};
     std::vector<unsigned int> indicesTop    = {0};
@@ -266,7 +269,7 @@ void Element::addExtraPoints(){
     } while (node != start);
 
     LOG::NewLine(LogLevel::INFO);
-    LOG(LogLevel::INFO) << "vertices after adding extra points";
+    LOG(LogLevel::INFO) << "points after adding extra points";
     for (unsigned int i = 0; i < points.size(); i++){
         LOG(LogLevel::INFO) << i << " x: " << points[i].x << " y: " << points[i].y;
     }
