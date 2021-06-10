@@ -36,7 +36,7 @@ public:
     void printNetwork               (LogLevel level = LogLevel::INFO) const;
     void printNetworkWithCoordinates(LogLevel level = LogLevel::INFO) const;
 
-    void createNetwork();
+    void createNetwork(bool addSegmentPoints = false);
 
     void createNetworkMesh(std::vector<Vector2f>& extraPoint);
 
@@ -98,6 +98,8 @@ private:
     float xMin;
     float yMin;
 
+    bool alsoSegmentPoints;
+
     // simply check if the number of points and indices is greater than 1
     void checkEnoughPointIndices() const;
 
@@ -107,6 +109,11 @@ private:
     // return the same node as input if all points are on boundary
     const Node* getNodeNotBoundary(const Node* node);
 
+    void addSegmentPointsToNetwork();
+
+    const Node* getNextNotBetween(const Node* node, bool upDirection);
+    const Node* getNextNotBetween(const Node* node, bool upDirection, std::vector<unsigned int>& indicesPoli);
+
     // this function calculate the relative orientation of the polygon with the segment
     // it is used in getNextIntersection to, given an intersection node, find wich one of the two intersection nodes closer (up and down)
     // can be reached with a line inside the segment
@@ -115,6 +122,8 @@ private:
 
     // as stated before, this function only takes intersection nodes as input
     const Node* getNextIntersection(const Node* node);
+
+    const Node* getNextIntersectionAdding(const Node* node, std::vector<unsigned int>& indicesPoli);
 
     // this function is used to order the intersection nodes, from the one the segment touches last to the one it touches first
     void sortIntersectionsNetwork(const std::vector<Node*>& nodes);

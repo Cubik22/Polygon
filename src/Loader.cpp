@@ -152,6 +152,7 @@ void Loader::SavePolygonToFile(const std::vector<Vector2f>& vertices, const std:
                                const std::string& fileName){
     LOG(LogLevel::INFO) << "Saving polygon to " << fileName;
     unsigned int numberVertices = vertices.size();
+    unsigned int numberIndices = indices.size();
     std::ofstream file;
     file.open(fileName);
     if (file.fail()){
@@ -164,10 +165,9 @@ void Loader::SavePolygonToFile(const std::vector<Vector2f>& vertices, const std:
     file << "# number of vertices\n";
     file << numberVertices << "\n";
     file << "# indices\n";
-    for (unsigned int i = 0; i < numberVertices; i++){
+    for (unsigned int i = 0; i < numberIndices; i++){
         file << indices[i] << " ";
     }
-    file << indices[2 * (numberVertices - 1)] << "\n";
     file << "# vertices\n";
     for (unsigned int i = 0; i < numberVertices; i++){
         file << vertices[i].x << " " << vertices[i].y << "\n";
@@ -260,7 +260,7 @@ int Loader::LoadSmallPolygonsIndicesFromFile(std::vector<std::shared_ptr<std::ve
         getline(file, line);
         convert.str(line);
         polygonsIndices.push_back(std::make_shared<std::vector<unsigned int>>());
-        while ((convert >> index) && !convert.eof()){
+        while (!convert.eof() && (convert >> index)){
             if (convert.fail()){
                 LOG(LogLevel::ERROR) << "problems when reading small polygons indices";
                 LOG(LogLevel::ERROR) << "Line: " << line;

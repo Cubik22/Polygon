@@ -6,7 +6,7 @@
 #include <sstream>
 
 Console::Console() : window{nullptr}, renderer{nullptr}, numberX(3), numberY(3),
-                     debug(false), debugMode{ModeApp::Mesh}, drawDebug{true}, textScale(0.035f) {}
+                     debug(false), debugMode{ModeApp::Mesh}, alsoSegmentPoints(false), drawDebug{true}, textScale(0.035f), numberBorder(0) {}
 
 Console::~Console() {
     // using smart pointers
@@ -32,6 +32,10 @@ void Console::setDebugMode(const ModeApp& mode){
 
 void Console::setFileNameDebug(const std::string& name){
     fileNameDebug = name;
+}
+
+void Console::setAlsoSegmentPoint(bool what){
+    alsoSegmentPoints = what;
 }
 
 void Console::setNumberBorder(unsigned int number){
@@ -309,6 +313,14 @@ void Console::askLoadFromFile(){
                         }
                     }
                 }
+                LOG::NewLine();
+                std::cout << "Do you want to also add segment points if inside polygon? [y/N] ";
+                std::getline(std::cin, consoleString);
+                if (consoleString == "y" || consoleString == "Y"){
+                    alsoSegmentPoints = true;
+                } else{
+                    alsoSegmentPoints = false;
+                }
             }
         }
     }
@@ -508,13 +520,7 @@ void Console::drawSegment(){
         }
 
         app.addSegmentPoint({(float)window->getXMouse(), (float)window->getYMouse()});
-//        if (app.getSegmentSize() == 1){
-////            renderer->replaceShape(1, new Lines(app.getSegmentPoints(), {}));
-//            renderer->replaceShape(1, new Shape(app.getSegmentPoints(), GeometricPrimitive::LinePointOpen));
-//        } else if (app.getSegmentSize() == 2){
-////            renderer->replaceShape(1, new Lines(app.getSegmentPoints(), {0, 1}));
-//            renderer->replaceShape(1, new Shape(app.getSegmentPoints(), GeometricPrimitive::LinePointOpen));
-//        }
+
         if (app.getSegmentSize() == 1 || app.getSegmentSize() == 2){
             std::vector<float> color = Renderer::getLastColor();
             renderer->replaceShape(1, new Shape(app.getSegmentPoints(), GeometricPrimitive::LinePointOpen,
@@ -541,7 +547,7 @@ void Console::drawSegment(){
 void Console::drawCuttedPolygon(){
     renderer->removeLastShape();
     renderer->removeLastShape();
-    app.cutMainPolygon();
+    app.cutMainPolygon(alsoSegmentPoints);
     const std::vector<std::shared_ptr<std::vector<unsigned int>>>& polygonsIndices = app.getPolygonsIndices();
 
     LOG::NewLine(LogLevel::INFO);

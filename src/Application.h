@@ -32,7 +32,7 @@ public:
 
     const Polygon& getPolygon() const;
     void createMainPolygon();
-    void cutMainPolygon();
+    void cutMainPolygon(bool alsoSegmentPoints = false);
     const std::vector<std::shared_ptr<std::vector<unsigned int>>>& getPolygonsIndices() const;
 
     void setVerticesIndicesLoaded();

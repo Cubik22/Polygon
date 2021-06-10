@@ -13,6 +13,10 @@ bool Node::isIntersection() const{
     return (up || down || up != nullptr || down != nullptr);
 }
 
+bool Node::isBetween() const{
+    return (!next || !previous || next == nullptr || previous == nullptr);
+}
+
 void Node::PrintNetwork(const Node* start, LogLevel level){
     const Node* node = start;
     unsigned int i = 0;

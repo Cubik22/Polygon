@@ -36,6 +36,7 @@ public:
     unsigned int getIndex() const;
 
     bool isIntersection() const;
+    bool isBetween() const;
 
     static void PrintNetwork(const Node* start, LogLevel level = LogLevel::INFO);
     static void DeleteNetwork(Node* start);

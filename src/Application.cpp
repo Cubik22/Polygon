@@ -103,10 +103,10 @@ void Application::createMainPolygon(){
 }
 
 
-void Application::cutMainPolygon(){
+void Application::cutMainPolygon(bool alsoSegmentPoints){
     cutted = true;
     mainPolygon.setSegment(segmentPoints[0], segmentPoints[1]);
-    mainPolygon.createNetwork();
+    mainPolygon.createNetwork(alsoSegmentPoints);
     //Network::printNetwork(mainPolygon.getStartNode());
     polygonsIndices = mainPolygon.cut();
     LOG(LogLevel::INFO) << "End of cutting";

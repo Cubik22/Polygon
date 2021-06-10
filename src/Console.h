@@ -33,6 +33,7 @@ public:
     void setDebugStatus(bool what);
     void setDebugMode(const ModeApp& mode);
     void setFileNameDebug(const std::string& name);
+    void setAlsoSegmentPoint(bool what);
     void setNumberBorder(unsigned int number);
 
     void start();
@@ -49,10 +50,12 @@ private:
 
     // debug variables
 
-    // this set the status to tebug
+    // this set the status to debug
     bool debug;
     ModeApp debugMode;
     std::string fileNameDebug;
+
+    bool alsoSegmentPoints;
 
     // drawDebug draw indices on the screen
     bool drawDebug;

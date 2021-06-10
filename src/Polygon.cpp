@@ -7,7 +7,7 @@
 Polygon::Polygon() : startNode{nullptr} {}
 
 Polygon::Polygon(const std::vector<Vector2f>& _points, const std::vector<unsigned int>& _indices) :
-    points(_points), indices(_indices), startNode(nullptr) {
+    points(_points), indices(_indices), startNode(nullptr), alsoSegmentPoints(false) {
 
     Polygon::createBoundingBoxVariables(points, width, height, xMin, yMin);
 
@@ -98,7 +98,8 @@ void Polygon::printNetworkWithCoordinates(LogLevel level) const{
     } while (node != start);
 }
 
-void Polygon::createNetwork(){
+void Polygon::createNetwork(bool addSegmentPoints){
+    alsoSegmentPoints = addSegmentPoints;
     // stores the intersection Nodes in order to sort them after
     std::vector<Node*> unorderedIntersectionNodes;
     // intersector is used to find intersection points
@@ -213,6 +214,10 @@ void Polygon::createNetwork(){
     if (minIntersectionNode != nullptr){
         startNode = minIntersectionNode;
         sortIntersectionsNetwork(unorderedIntersectionNodes);
+
+        if (addSegmentPoints){
+            addSegmentPointsToNetwork();
+        }
 
         calculateOrientation();
 
@@ -760,6 +765,91 @@ bool Polygon::checkIsPointIntersection(const Node* node) const{
     return true;
 }
 
+void Polygon::addSegmentPointsToNetwork(){
+    bool insideP1 = !Polygon::isPointBoundaryConcavePolygon(p1, points, indices) &&
+                     Polygon::isPointInsideConcavePolygon(p1, points, indices);
+    bool insideP2 = !Polygon::isPointBoundaryConcavePolygon(p2, points, indices) &&
+                     Polygon::isPointInsideConcavePolygon(p2, points, indices);
+
+    if (!insideP1 && !insideP2){
+        LOG(LogLevel::INFO) << "Both segment points are not inside polygon";
+        return;
+    }
+
+    // p1 has always the lower dot product
+
+    bool foundP1 = false;
+    bool foundP2 = false;
+
+    Node* node = startNode;
+    const Vector2f segment = p2 - p1;
+    while (node != nullptr){
+        if (node->down != nullptr){
+            double dotP1 = 0.0;
+            Vector2f diffNode = points[node->getIndex()] - p1;
+            Vector2f diffDown = points[node->down->getIndex()] - p1;
+            if (!foundP1 && diffDown.dot(segment) < dotP1 &&
+                            diffNode.dot(segment) > dotP1){
+                points.push_back(p1);
+                Node* down = node->down;
+                Node* nodeP1 = new Node(points.size() - 1);
+                down->up = nodeP1;
+                nodeP1->down = down;
+                nodeP1->up = node;
+                node->down = nodeP1;
+
+                foundP1 = true;
+
+                LOG(LogLevel::INFO) << "added segment point " << 1 << " -> down: " << down->getIndex() << ", up: " << node->getIndex();
+            }
+            double dotP2 = segment.dot(segment);
+            diffDown = points[node->down->getIndex()] - p1;
+            if (!foundP2 && diffDown.dot(segment) < dotP2 &&
+                            diffNode.dot(segment) > dotP2){
+                points.push_back(p2);
+                Node* down = node->down;
+                Node* nodeP2 = new Node(points.size() - 1);
+                down->up = nodeP2;
+                nodeP2->down = down;
+                nodeP2->up = node;
+                node->down = nodeP2;
+
+                foundP2 = true;
+
+                LOG(LogLevel::INFO) << "added segment point " << 2 << " -> down: " << down->getIndex() << ", up: " << node->getIndex();
+            }
+            if (foundP1 && foundP2){
+                break;
+            }
+        }
+        node = node->up;
+    }
+}
+
+const Node* Polygon::getNextNotBetween(const Node* node, bool upDirection){
+    while (node != nullptr && node->isBetween()){
+        if (upDirection){
+            node = node->up;
+        } else{
+            node = node->down;
+        }
+    }
+    return node;
+}
+
+const Node* Polygon::getNextNotBetween(const Node* node, bool upDirection, std::vector<unsigned int>& indicesPoli){
+    while (node != nullptr && node->isBetween()){
+        indicesPoli.push_back(node->getIndex());
+        LOG(LogLevel::INFO) << "at segment point: " << node->getIndex();
+        if (upDirection){
+            node = node->up;
+        } else{
+            node = node->down;
+        }
+    }
+    return node;
+}
+
 void Polygon::calculateOrientation(){
     if (!startNode->up || startNode->up == nullptr){
         LOG(LogLevel::WARN) << "start node does not have up, orientation set to positive";
@@ -784,20 +874,43 @@ const Node* Polygon::getNextIntersection(const Node *node){
         return nullptr;
     }
     if (node->up == nullptr){
-        return node->down;
+        return getNextNotBetween(node->down, false);
     }
     if (node->down == nullptr){
-        return node->up;
+        return getNextNotBetween(node->up, true);
     }
     Intersector inter;
     inter.setSegment1(points[node->previous->getIndex()], points[node->up->getIndex()]);
     inter.setSegment2(points[node->next->getIndex()], points[node->up->getIndex()]);
     if (inter.calculateRelativePosition() == orientation){
         LOG(LogLevel::INFO) << node->getIndex() << " same orientation";
-        return node->up;
+        return getNextNotBetween(node->up, true);
     } else{
         LOG(LogLevel::INFO) << node->getIndex() << " opposite orientation";
-        return node->down;
+        return getNextNotBetween(node->down, false);
+    }
+}
+
+const Node* Polygon::getNextIntersectionAdding(const Node* node, std::vector<unsigned int>& indicesPoli){
+    if (!node->isIntersection()){
+        LOG(LogLevel::WARN) << node->getIndex() << " returned nullptr from Polygon::getNextIntersection";
+        return nullptr;
+    }
+    if (node->up == nullptr){
+        return getNextNotBetween(node->down, false, indicesPoli);
+    }
+    if (node->down == nullptr){
+        return getNextNotBetween(node->up, true, indicesPoli);
+    }
+    Intersector inter;
+    inter.setSegment1(points[node->previous->getIndex()], points[node->up->getIndex()]);
+    inter.setSegment2(points[node->next->getIndex()], points[node->up->getIndex()]);
+    if (inter.calculateRelativePosition() == orientation){
+        LOG(LogLevel::INFO) << node->getIndex() << " same orientation";
+        return getNextNotBetween(node->up, true, indicesPoli);
+    } else{
+        LOG(LogLevel::INFO) << node->getIndex() << " opposite orientation";
+        return getNextNotBetween(node->down, false, indicesPoli);
     }
 }
 
@@ -815,7 +928,7 @@ void Polygon::sortIntersectionsNetwork(const std::vector<Node*>& nodes){
     Node* minNode = startNode;
     Node* node = startNode;
 
-    Vector2f segment = p2 - p1;
+    const Vector2f segment = p2 - p1;
     for (unsigned int i = 1; i < nodesLenght; i++){
         //LOG(LogLevel::DEBUG) << "node: " << minNode->getIndex();
         double minProduct = Polygon::BIG_DOUBLE;
@@ -867,11 +980,12 @@ void Polygon::continueSmallPolygon(const Node* node, const Node* initialNode, st
         LOG(LogLevel::WARN) << node->getIndex() << " closing polygon other way";
         indicesPoli.push_back(node->getIndex());
     }
+
     if (!node->touched){
         LOG(LogLevel::INFO) << node->getIndex() << " is not already touched";
         node->touched = true;
         const Node* nodeCreation = node;
-        node = getNextIntersection(node);
+        node = !alsoSegmentPoints ? getNextIntersection(node) : getNextIntersectionAdding(node, indicesPoli);
         // here is where we will close the polygon
         if (node == initialNode){
             LOG(LogLevel::INFO) << node->getIndex() << " closing polygon";
@@ -894,6 +1008,13 @@ void Polygon::continueSmallPolygon(const Node* node, const Node* initialNode, st
         continueSmallPolygon(nodeCreation, nodeCreation, indicesPoliCreation, polygonsIndices);
     } else{
         LOG(LogLevel::INFO) << node->getIndex() << " is already touched";
+        if (alsoSegmentPoints){
+            LOG(LogLevel::INFO) << "returning to start";
+            const Node* arrivedNode = getNextIntersectionAdding(node, indicesPoli);
+            if (arrivedNode != initialNode){
+                LOG(LogLevel::WARN) << "arrived node is not initial node";
+            }
+        }
     }
 }
 

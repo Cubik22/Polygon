@@ -4,7 +4,7 @@
 # number of vertices
 5
 # indices
-0 1 2 3 4 597186656
+0 1 2 3 4
 # vertices
 -0.455 -0.634
 0.352 -0.312
