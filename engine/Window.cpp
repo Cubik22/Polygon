@@ -78,12 +78,16 @@ void Window::processImput(){
     updatePressedClick(glMouseRightPressed, mouseRightPressed, mouseRightClick);
     bool glMouseLeftPressed = glfwGetMouseButton(glWindow, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS;
     updatePressedClick(glMouseLeftPressed, mouseLeftPressed, mouseLeftClick);
+
     bool glEnterPressed = glfwGetKey(glWindow, GLFW_KEY_ENTER) == GLFW_PRESS;
     updatePressedClick(glEnterPressed, enterPressed, enterClick);
     bool glBackPressed = glfwGetKey(glWindow, GLFW_KEY_BACKSPACE) == GLFW_PRESS;
     updatePressedClick(glBackPressed, backPressed, backClick);
     bool glEscPressed = glfwGetKey(glWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS;
     updatePressedClick(glEscPressed, escPressed, escClick);
+    bool glSpacePressed = glfwGetKey(glWindow, GLFW_KEY_SPACE) == GLFW_PRESS;
+    updatePressedClick(glSpacePressed, spacePressed, spaceClick);
+
     bool glUpPressed = glfwGetKey(glWindow, GLFW_KEY_UP) == GLFW_PRESS;
     updatePressedClick(glUpPressed, upPressed, upClick);
     bool glDownPressed = glfwGetKey(glWindow, GLFW_KEY_DOWN) == GLFW_PRESS;
@@ -92,10 +96,14 @@ void Window::processImput(){
     updatePressedClick(glRightPressed, rightPressed, rightClick);
     bool glLeftPressed = glfwGetKey(glWindow, GLFW_KEY_LEFT) == GLFW_PRESS;
     updatePressedClick(glLeftPressed, leftPressed, leftClick);
+
+    bool glBPressed = glfwGetKey(glWindow, GLFW_KEY_B) == GLFW_PRESS;
+    updatePressedClick(glBPressed, bPressed, bClick);
     bool glDPressed = glfwGetKey(glWindow, GLFW_KEY_D) == GLFW_PRESS;
     updatePressedClick(glDPressed, dPressed, dClick);
-    bool glSpacePressed = glfwGetKey(glWindow, GLFW_KEY_SPACE) == GLFW_PRESS;
-    updatePressedClick(glSpacePressed, spacePressed, spaceClick);
+    bool glWPressed = glfwGetKey(glWindow, GLFW_KEY_W) == GLFW_PRESS;
+    updatePressedClick(glWPressed, wPressed, wClick);
+
 }
 
 bool Window::isMouseLeftClick() const{
@@ -138,8 +146,16 @@ bool Window::isLeftClick() const{
     return leftClick;
 }
 
+bool Window::isBClick() const{
+    return bClick;
+}
+
 bool Window::isDClick() const{
     return dClick;
+}
+
+bool Window::isWClick() const{
+    return wClick;
 }
 
 void Window::initiGLFW(){

@@ -57,6 +57,8 @@ public:
 
     static void setLineWidth(unsigned int width);
 
+    static void setClearColor(float r, float g, float b);
+
     static std::vector<float> getNextColor();
     static std::vector<float> getLastColor();
 

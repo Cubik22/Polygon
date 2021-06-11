@@ -10,9 +10,9 @@ int main(){
 
     Console console;
 
-    console.setDebugStatus(true);
-    console.setDebugMode(ModeApp::Cut);
-    console.setFileNameDebug("first.txt");
+//    console.setDebugStatus(true);
+//    console.setDebugMode(ModeApp::Cut);
+//    console.setFileNameDebug("first.txt");
 
 //    console.setNumberX(3);
 //    console.setNumberY(3);

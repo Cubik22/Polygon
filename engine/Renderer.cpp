@@ -165,8 +165,11 @@ void Renderer::initGLEW(){
     // enable setting gl_PointSize in Vertex Shader
     glEnable(GL_PROGRAM_POINT_SIZE);
 
-    //set the default line width to 3
+    // set the default line width to 3
     glLineWidth(3);
+
+    // set clear color to white
+//    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
     glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
@@ -250,6 +253,10 @@ void Renderer::initFreetype(){
 
 void Renderer::setLineWidth(unsigned int width){
     glLineWidth(width);
+}
+
+void Renderer::setClearColor(float r, float g, float b){
+    glClearColor(r, g, b, 1.0f);
 }
 
 std::vector<float> Renderer::getNextColor(){

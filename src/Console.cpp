@@ -6,7 +6,8 @@
 #include <sstream>
 
 Console::Console() : window{nullptr}, renderer{nullptr}, numberX(3), numberY(3),
-                     debug(false), debugMode{ModeApp::Mesh}, alsoSegmentPoints(false), drawDebug{true}, textScale(0.035f), numberBorder(0) {}
+                     debug(false), debugMode{ModeApp::Mesh}, alsoSegmentPoints(false), drawDebug{true},
+                     textScale(0.035f), whiteBackground(false), numberBorder(0) {}
 
 Console::~Console() {
     // using smart pointers
@@ -107,6 +108,14 @@ bool Console::processWindow(){
     }
     if (window->isSpaceClick() || window->isDClick()){
         drawDebug = !drawDebug;
+    }
+    if (window->isWClick()){
+        Renderer::setClearColor(1.0, 1.0, 1.0);
+        whiteBackground = true;
+    }
+    if (window->isBClick()){
+        Renderer::setClearColor(0.0, 0.0, 0.0);
+        whiteBackground = false;
     }
     if (window->isUpClick() || window->isRightClick()){
         if (textScale < 0.1f){
@@ -229,7 +238,11 @@ void Console::drawIndices(const std::vector<Vector2f>& vertices, const std::vect
             std::string toString;
             convert >> toString;
             convert.clear();
-            renderer->drawText(toString, vertices[index].x, vertices[index].y, textScale);
+            if (whiteBackground){
+                renderer->drawText(toString, vertices[index].x, vertices[index].y, textScale, 0, 0, 0);
+            } else{
+                renderer->drawText(toString, vertices[index].x, vertices[index].y, textScale, 1, 1, 1);
+            }
         }
     }
 }

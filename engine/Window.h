@@ -40,7 +40,9 @@ public:
     bool isRightClick() const;
     bool isLeftClick() const;
 
+    bool isBClick() const;
     bool isDClick() const;
+    bool isWClick() const;
 
     static void initiGLFW();
     static void terminateGLFW();
@@ -74,8 +76,12 @@ private:
     bool leftPressed;
     bool leftClick;
 
+    bool bPressed;
+    bool bClick;
     bool dPressed;
     bool dClick;
+    bool wPressed;
+    bool wClick;
 
     friend void updatePressedClick(bool glPressed, bool& pressed, bool& click);
     friend void mouseCallback(GLFWwindow* glWindow, double xpos, double ypos);

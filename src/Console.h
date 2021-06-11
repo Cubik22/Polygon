@@ -61,6 +61,8 @@ private:
     bool drawDebug;
     float textScale;
 
+    bool whiteBackground;
+
     unsigned int numberBorder;
 
     void terminate();
