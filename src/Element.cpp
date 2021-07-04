@@ -345,6 +345,7 @@ void Element::tryAdding(const Vector2f& vector, Node* start, bool forward, bool 
         create->previous = node;
         node->next = create;
     }
+    // when point is projected onto polygon segment
     if (!create->next->touched && !create->previous->touched &&
         (abs(points[create->next->getIndex()].x - points[create->previous->getIndex()].x) < Element::TOLERANCE ||
          abs(points[create->next->getIndex()].y - points[create->previous->getIndex()].y) < Element::TOLERANCE)){

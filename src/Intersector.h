@@ -17,7 +17,7 @@ enum class IntersectionType{
 enum class LineSegmentIntersection{
     Parallel        = 0,
     OutsideSegment  = 1,
-    InsideSegment    = 2,
+    InsideSegment   = 2,
     FirstVertex     = 3,
     SecondVertex    = 4
 };

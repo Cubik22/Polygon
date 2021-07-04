@@ -874,9 +874,11 @@ const Node* Polygon::getNextIntersection(const Node *node){
         return nullptr;
     }
     if (node->up == nullptr){
+        LOG(LogLevel::INFO) << node->getIndex() << " border node";
         return getNextNotBetween(node->down, false);
     }
     if (node->down == nullptr){
+        LOG(LogLevel::INFO) << node->getIndex() << " border node";
         return getNextNotBetween(node->up, true);
     }
     Intersector inter;
@@ -897,9 +899,11 @@ const Node* Polygon::getNextIntersectionAdding(const Node* node, std::vector<uns
         return nullptr;
     }
     if (node->up == nullptr){
+        LOG(LogLevel::INFO) << node->getIndex() << " border node";
         return getNextNotBetween(node->down, false, indicesPoli);
     }
     if (node->down == nullptr){
+        LOG(LogLevel::INFO) << node->getIndex() << " border node";
         return getNextNotBetween(node->up, true, indicesPoli);
     }
     Intersector inter;

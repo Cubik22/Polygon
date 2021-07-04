@@ -326,15 +326,17 @@ void Console::askLoadFromFile(){
                         }
                     }
                 }
-                LOG::NewLine();
-                std::cout << "Do you want to also add segment points if inside polygon? [y/N] ";
-                std::getline(std::cin, consoleString);
-                if (consoleString == "y" || consoleString == "Y"){
-                    alsoSegmentPoints = true;
-                } else{
-                    alsoSegmentPoints = false;
-                }
             }
+        }
+    }
+    if (mode == ModeApp::Cut){
+        LOG::NewLine();
+        std::cout << "Do you want to also add segment points if inside polygon? [y/N] ";
+        std::getline(std::cin, consoleString);
+        if (consoleString == "y" || consoleString == "Y"){
+            alsoSegmentPoints = true;
+        } else{
+            alsoSegmentPoints = false;
         }
     }
     if (mode == ModeApp::Mesh && !debug){
@@ -343,7 +345,7 @@ void Console::askLoadFromFile(){
     }
     LOG::NewLine();
 //    app.printVertices();
-    //    app.printIndices();
+//    app.printIndices();
 }
 
 void Console::askNumberPolygonMesh(){
@@ -483,7 +485,6 @@ void Console::drawPolygon(){
             app.removeLastVertex();
         }
         bool added = app.addVertex({(float)window->getXMouse(), (float)window->getYMouse()});
-        //renderer->replaceShape(0, new LinesPointIndicesOpen(app.getVertices(), app.getIndices()));
         std::vector<float> color = Renderer::getLastColor();
         renderer->replaceShape(0, new Shape(app.getVertices(), app.getIndices(), GeometricPrimitive::LinePointOpen,
                                             color[0], color[1], color[2]));
